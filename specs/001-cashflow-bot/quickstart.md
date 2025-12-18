@@ -24,6 +24,7 @@ This guide will help you set up a complete development environment for the Teleg
 ### Telegram Bot Setup
 
 1. **Create Bot** (one-time setup):
+
    ```bash
    # Message @BotFather on Telegram
    /newbot
@@ -31,10 +32,11 @@ This guide will help you set up a complete development environment for the Teleg
    ```
 
 2. **Get Chat IDs**:
+
    ```bash
    # Your Telegram user ID
    # Message @userinfobot: /start
-   
+
    # Create a test management group
    # Add @RawDataBot to get group chat ID
    ```
@@ -81,6 +83,7 @@ pip list | grep -E "python-telegram-bot|sqlalchemy|pytest"
 ```
 
 **Expected output**:
+
 ```
 python-telegram-bot  20.7
 SQLAlchemy          2.0.25
@@ -129,6 +132,7 @@ psql -h localhost -U dev -d cashflow_dev -c "\dt"
 ```
 
 **Expected tables**:
+
 ```
  public | users
  public | categories
@@ -148,6 +152,7 @@ psql -h localhost -U dev -d cashflow_dev -c "SELECT name, emoji FROM categories;
 ```
 
 **Expected output**:
+
 ```
     name      | emoji
 --------------+-------
@@ -198,6 +203,7 @@ ADMIN_TELEGRAM_ID=YOUR_TELEGRAM_USER_ID
 ```
 
 **How to get your Telegram User ID**:
+
 1. Message @userinfobot on Telegram
 2. Send `/start`
 3. Copy your user ID
@@ -228,13 +234,13 @@ pytest --cov=src --cov-report=term
 # Expected output:
 # ==================== test session starts ====================
 # collected 45 items
-# 
+#
 # tests/unit/test_validators.py ........
 # tests/unit/test_formatters.py .......
 # tests/integration/test_database.py .....
-# 
+#
 # ==================== 45 passed in 2.34s ====================
-# 
+#
 # Coverage: 82%
 ```
 
@@ -265,6 +271,7 @@ mypy src/
 ```
 
 **Fix formatting issues**:
+
 ```bash
 black src/  # Auto-format code
 ```
@@ -285,6 +292,7 @@ psql -h localhost -U dev -d cashflow_dev \
 ```
 
 **Expected output**:
+
 ```
  telegram_id | status   | role
 -------------+----------+-------
@@ -412,12 +420,14 @@ watchmedo auto-restart --patterns="*.py" --recursive -- python -m src.main
 **Goal**: Test complete income recording workflow
 
 **Steps**:
+
 1. Send `/income 500000 Client payment`
 2. Verify confirmation message
 3. Send `/summary`
 4. Verify income appears in summary
 
 **Expected Database State**:
+
 ```sql
 SELECT transaction_id, amount, description FROM transactions WHERE type = 'income';
 -- TX20251218001 | 500000.00 | Client payment
@@ -428,6 +438,7 @@ SELECT transaction_id, amount, description FROM transactions WHERE type = 'incom
 **Goal**: Test expense recording with category selection
 
 **Steps**:
+
 1. Send `/expense 250000 Office rent`
 2. Click "🏢 Operational" button
 3. Verify confirmation
@@ -435,8 +446,9 @@ SELECT transaction_id, amount, description FROM transactions WHERE type = 'incom
 5. Verify expense appears under Operational
 
 **Expected Database State**:
+
 ```sql
-SELECT t.transaction_id, t.amount, c.name 
+SELECT t.transaction_id, t.amount, c.name
 FROM transactions t
 JOIN categories c ON t.category_id = c.category_id
 WHERE t.type = 'expense';
@@ -448,6 +460,7 @@ WHERE t.type = 'expense';
 **Goal**: Test sequential prompt conversation
 
 **Steps**:
+
 1. Send `/income` (no arguments)
 2. Bot: "Enter amount:"
 3. Reply: `500000`
@@ -456,6 +469,7 @@ WHERE t.type = 'expense';
 6. Verify confirmation
 
 **Conversation State Tracking**:
+
 ```python
 # ConversationHandler states:
 # WAITING_AMOUNT → WAITING_DESCRIPTION → END
@@ -466,6 +480,7 @@ WHERE t.type = 'expense';
 **Goal**: Test duplicate transaction warning
 
 **Steps**:
+
 1. Send `/income 500000 Test`
 2. Wait 10 seconds
 3. Send `/income 500000 Test` (identical)
@@ -474,6 +489,7 @@ WHERE t.type = 'expense';
 6. Verify both transactions saved
 
 **Database Verification**:
+
 ```sql
 SELECT COUNT(*) FROM transactions WHERE amount = 500000 AND description = 'Test';
 -- Should be 2
@@ -484,6 +500,7 @@ SELECT COUNT(*) FROM transactions WHERE amount = 500000 AND description = 'Test'
 **Goal**: Test automated 24:00 WITA report
 
 **Steps**:
+
 1. Record some transactions during the day
 2. Set system time to 23:59:50 WITA (for testing)
 3. Wait for 24:00:00
@@ -491,6 +508,7 @@ SELECT COUNT(*) FROM transactions WHERE amount = 500000 AND description = 'Test'
 5. Check `daily_summaries` table for generated summary
 
 **Manual Trigger for Testing**:
+
 ```python
 # Python console
 from src.scheduler.daily_report import generate_daily_report
@@ -506,6 +524,7 @@ asyncio.run(generate_daily_report())
 ### Issue: Bot doesn't respond to commands
 
 **Check**:
+
 ```bash
 # 1. Verify bot is running
 ps aux | grep "python -m src.main"
@@ -518,6 +537,7 @@ curl https://api.telegram.org/bot<YOUR_TOKEN>/getMe
 ```
 
 **Solution**:
+
 - Verify `TELEGRAM_BOT_TOKEN` in `.env`
 - Check network connectivity
 - Ensure bot isn't blocked by firewall
@@ -525,6 +545,7 @@ curl https://api.telegram.org/bot<YOUR_TOKEN>/getMe
 ### Issue: Database connection errors
 
 **Check**:
+
 ```bash
 # 1. PostgreSQL running?
 docker ps | grep postgres
@@ -537,6 +558,7 @@ echo $DATABASE_URL
 ```
 
 **Solution**:
+
 ```bash
 # Restart PostgreSQL
 docker-compose restart postgres
@@ -550,6 +572,7 @@ alembic upgrade head
 ### Issue: Tests failing
 
 **Check**:
+
 ```bash
 # Run with verbose output
 pytest -vv -s
@@ -559,6 +582,7 @@ pytest tests/unit/test_validators.py::test_amount_validation -vv
 ```
 
 **Common Causes**:
+
 - Missing test dependencies: `pip install -r requirements-dev.txt`
 - Database not running: `docker-compose up -d postgres`
 - Environment variables not set: `source .env` or `export $(cat .env | xargs)`
@@ -566,6 +590,7 @@ pytest tests/unit/test_validators.py::test_amount_validation -vv
 ### Issue: Timezone incorrect
 
 **Check**:
+
 ```bash
 # Verify timezone setting
 python -c "from src.config.settings import Settings; print(Settings().timezone)"
@@ -576,6 +601,7 @@ date  # Any OS
 ```
 
 **Solution**:
+
 ```bash
 # Set TIMEZONE in .env
 TIMEZONE=Asia/Makassar
@@ -614,6 +640,7 @@ git diff HEAD~1 src/  # Show changes since last commit
 ### VS Code Settings
 
 Create `.vscode/settings.json`:
+
 ```json
 {
   "python.defaultInterpreterPath": "${workspaceFolder}/venv/bin/python",
@@ -633,6 +660,7 @@ Create `.vscode/settings.json`:
 ### Debug Configuration
 
 Create `.vscode/launch.json`:
+
 ```json
 {
   "version": "0.2.0",
@@ -670,6 +698,7 @@ Create `.vscode/launch.json`:
 5. **Follow TDD**: Red → Green → Refactor workflow per Constitution Principle II
 
 **Resources**:
+
 - [python-telegram-bot docs](https://docs.python-telegram-bot.org/)
 - [SQLAlchemy 2.0 tutorial](https://docs.sqlalchemy.org/en/20/tutorial/)
 - [PostgreSQL documentation](https://www.postgresql.org/docs/15/)

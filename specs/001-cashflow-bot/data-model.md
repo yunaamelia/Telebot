@@ -53,14 +53,14 @@ CREATE TABLE users (
     employee_id VARCHAR(100),
     status VARCHAR(20) NOT NULL DEFAULT 'pending',  
         -- Values: 'pending', 'approved', 'rejected'
-    role VARCHAR(20) NOT NULL DEFAULT 'staff',      
+    role VARCHAR(20) NOT NULL DEFAULT 'staff',  
         -- Values: 'staff', 'management', 'admin'
     registration_request_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     approved_date TIMESTAMP WITH TIME ZONE,
     approved_by_user_id INT REFERENCES users(user_id),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    
+
     CONSTRAINT chk_status CHECK (status IN ('pending', 'approved', 'rejected')),
     CONSTRAINT chk_role CHECK (role IN ('staff', 'management', 'admin'))
 );
@@ -70,6 +70,7 @@ CREATE INDEX idx_users_status ON users(status) WHERE status = 'approved';
 ```
 
 **Field Descriptions**:
+
 - `telegram_id`: Telegram user ID (from Update.effective_user.id)
 - `employee_id`: Company employee ID/code for registration verification
 - `status`: Registration approval status
@@ -91,7 +92,7 @@ CREATE TABLE categories (
     sort_order INT NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    
+
     CONSTRAINT chk_category_type CHECK (type IN ('income', 'expense'))
 );
 
@@ -99,6 +100,7 @@ CREATE INDEX idx_categories_type ON categories(type);
 ```
 
 **Seed Data**:
+
 ```sql
 INSERT INTO categories (name, type, emoji, sort_order) VALUES
     ('Income', 'income', '💰', 1),
@@ -136,7 +138,7 @@ CREATE TABLE transactions (
         -- True if user confirmed duplicate warning
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    
+
     CONSTRAINT chk_amount_positive CHECK (amount > 0),
     CONSTRAINT chk_amount_max CHECK (amount <= 10000000000),
     CONSTRAINT chk_type CHECK (type IN ('income', 'expense')),
@@ -150,26 +152,28 @@ CREATE INDEX idx_transactions_category ON transactions(category_id);
 CREATE INDEX idx_transactions_timestamp ON transactions(timestamp);
 
 -- Partial index for active (non-archived) data - speeds up recent queries
-CREATE INDEX idx_transactions_active ON transactions(transaction_date) 
+CREATE INDEX idx_transactions_active ON transactions(transaction_date)
     WHERE status = 'recorded' AND transaction_date > CURRENT_DATE - INTERVAL '1 year';
 
 -- Composite index for daily summary generation
-CREATE INDEX idx_transactions_daily_summary 
-    ON transactions(transaction_date, type, category_id) 
+CREATE INDEX idx_transactions_daily_summary
+    ON transactions(transaction_date, type, category_id)
     WHERE status = 'recorded';
 
 -- Full-text search index for transaction descriptions
-CREATE INDEX idx_transactions_description_fts ON transactions 
+CREATE INDEX idx_transactions_description_fts ON transactions
     USING gin(to_tsvector('indonesian', description));
 ```
 
 **Field Descriptions**:
+
 - `transaction_id`: Sequential ID with date prefix for easy human readability
 - `timestamp`: UTC timestamp of when transaction recorded
 - `transaction_date`: WITA date (computed from timestamp) for grouping in daily reports
 - `is_duplicate_confirmed`: Tracks if duplicate warning was acknowledged (FR-023)
 
 **Transaction ID Generation**:
+
 ```python
 def generate_transaction_id(date: datetime.date, sequence: int) -> str:
     """Generate sequential transaction ID: TX20251218001"""
@@ -196,7 +200,7 @@ CREATE TABLE daily_summaries (
         -- Format: {"Operational": 150000, "Salaries": 500000, ...}
     generated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     report_delivered_at TIMESTAMP WITH TIME ZONE,
-    
+
     CONSTRAINT chk_amounts_non_negative CHECK (
         total_income >= 0 AND total_expenses >= 0
     )
@@ -207,11 +211,13 @@ CREATE INDEX idx_daily_summaries_breakdown ON daily_summaries USING gin(category
 ```
 
 **Field Descriptions**:
+
 - `net_cash_flow`: Computed column (total_income - total_expenses)
 - `category_breakdown`: JSONB for flexible category aggregation
 - `report_delivered_at`: Tracks successful 24:00 WITA report delivery
 
 **Example category_breakdown**:
+
 ```json
 {
   "Income": 2500000,
@@ -244,7 +250,7 @@ CREATE TABLE reports (
     error_message TEXT,
     generated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     sent_at TIMESTAMP WITH TIME ZONE,
-    
+
     CONSTRAINT chk_report_type CHECK (report_type IN ('daily', 'weekly', 'monthly', 'manual')),
     CONSTRAINT chk_delivery_status CHECK (delivery_status IN ('pending', 'sent', 'failed', 'retrying'))
 );
@@ -267,7 +273,7 @@ from src.database import Base
 
 class User(Base):
     __tablename__ = 'users'
-    
+
     user_id = Column(Integer, primary_key=True)
     telegram_id = Column(BigInteger, unique=True, nullable=False, index=True)
     telegram_username = Column(String(255))
@@ -280,16 +286,16 @@ class User(Base):
     approved_by_user_id = Column(Integer, ForeignKey('users.user_id'))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
+
     # Relationships
     transactions = relationship("Transaction", back_populates="user")
     approver = relationship("User", remote_side=[user_id])
-    
+
     __table_args__ = (
         CheckConstraint("status IN ('pending', 'approved', 'rejected')", name='chk_status'),
         CheckConstraint("role IN ('staff', 'management', 'admin')", name='chk_role'),
     )
-    
+
     def is_authorized(self) -> bool:
         """Check if user can access bot features"""
         return self.status == 'approved'
@@ -305,7 +311,7 @@ from src.database import Base
 
 class Transaction(Base):
     __tablename__ = 'transactions'
-    
+
     transaction_id = Column(String(50), primary_key=True)
     user_id = Column(Integer, ForeignKey('users.user_id'), nullable=False)
     category_id = Column(Integer, ForeignKey('categories.category_id'), nullable=False)
@@ -318,18 +324,18 @@ class Transaction(Base):
     is_duplicate_confirmed = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
+
     # Relationships
     user = relationship("User", back_populates="transactions")
     category = relationship("Category")
-    
+
     __table_args__ = (
         CheckConstraint('amount > 0', name='chk_amount_positive'),
         CheckConstraint('amount <= 10000000000', name='chk_amount_max'),
         CheckConstraint("type IN ('income', 'expense')", name='chk_type'),
         CheckConstraint("status IN ('recorded', 'archived', 'deleted')", name='chk_status'),
     )
-    
+
     @property
     def formatted_amount(self) -> str:
         """Format amount with Rupiah formatting"""
@@ -341,7 +347,7 @@ class Transaction(Base):
 ```python
 class Category(Base):
     __tablename__ = 'categories'
-    
+
     category_id = Column(Integer, primary_key=True)
     name = Column(String(100), unique=True, nullable=False)
     type = Column(String(20), nullable=False)
@@ -349,7 +355,7 @@ class Category(Base):
     sort_order = Column(Integer, nullable=False)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    
+
     __table_args__ = (
         CheckConstraint("type IN ('income', 'expense')", name='chk_category_type'),
     )
@@ -362,7 +368,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 
 class DailySummary(Base):
     __tablename__ = 'daily_summaries'
-    
+
     summary_id = Column(Integer, primary_key=True)
     summary_date = Column(Date, unique=True, nullable=False)
     total_income = Column(Numeric(15, 2), nullable=False, default=0)
@@ -374,9 +380,9 @@ class DailySummary(Base):
     category_breakdown = Column(JSONB)
     generated_at = Column(DateTime(timezone=True), server_default=func.now())
     report_delivered_at = Column(DateTime(timezone=True))
-    
+
     __table_args__ = (
-        CheckConstraint('total_income >= 0 AND total_expenses >= 0', 
+        CheckConstraint('total_income >= 0 AND total_expenses >= 0',
                        name='chk_amounts_non_negative'),
     )
 ```
@@ -391,7 +397,7 @@ Per FR-031: 1-year active retention + 2-year archive + deletion after 3 years.
 
 ```sql
 -- Monthly archival job (run on 1st of each month)
-UPDATE transactions 
+UPDATE transactions
 SET status = 'archived'
 WHERE transaction_date < CURRENT_DATE - INTERVAL '1 year'
   AND status = 'recorded';
@@ -405,6 +411,7 @@ WHERE transaction_date < CURRENT_DATE - INTERVAL '3 years'
 ### Query Performance Optimization
 
 **Active Data Queries** (use partial index):
+
 ```sql
 SELECT * FROM transactions
 WHERE transaction_date > CURRENT_DATE - INTERVAL '1 year'
@@ -412,6 +419,7 @@ WHERE transaction_date > CURRENT_DATE - INTERVAL '1 year'
 ```
 
 **Archived Data Access** (slower, for audits only):
+
 ```sql
 SELECT * FROM transactions
 WHERE status = 'archived'
@@ -435,16 +443,16 @@ from sqlalchemy.dialects import postgresql
 def upgrade():
     # Create users table
     op.create_table('users', ...)
-    
+
     # Create categories table
     op.create_table('categories', ...)
-    
+
     # Create transactions table
     op.create_table('transactions', ...)
-    
+
     # Create daily_summaries table
     op.create_table('daily_summaries', ...)
-    
+
     # Seed categories
     op.execute("""
         INSERT INTO categories (name, type, emoji, sort_order) VALUES
@@ -496,6 +504,7 @@ def downgrade():
 | Duplicate detection lookup | <15ms | 60-second window |
 
 **Index Maintenance**:
+
 - Reindex monthly: `REINDEX INDEX CONCURRENTLY idx_transactions_active;`
 - VACUUM ANALYZE weekly: `VACUUM ANALYZE transactions;`
 

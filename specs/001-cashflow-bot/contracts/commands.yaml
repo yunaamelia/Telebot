@@ -10,17 +10,17 @@ commands:
   # ============================================================================
   # Core Transaction Commands (Priority: P1)
   # ============================================================================
-  
+
   - command: /income
     description: "Record income transaction"
     priority: P1
     scope: all_private_chats
     authorization: approved_users_only
-    
+
     syntax:
       - /income <amount> [description]
       - /income  # Interactive mode with sequential prompts
-    
+
     parameters:
       - name: amount
         type: numeric
@@ -34,7 +34,7 @@ commands:
           - rule: numeric_formats
             accepts: ["500000", "500,000", "500.000"]
             message: "Amount must be numeric (commas/dots allowed as separators)"
-        
+
       - name: description
         type: text
         required: false
@@ -43,7 +43,7 @@ commands:
             value: 500
             message: "Description too long (max 500 characters)"
         default: "No description"
-    
+
     behavior:
       command_mode:
         - "Parse amount from first argument"
@@ -51,7 +51,7 @@ commands:
         - "Validate amount format"
         - "Save transaction with category 'Income'"
         - "Send confirmation message"
-      
+
       interactive_mode:
         - "Send prompt: 'Enter amount:'"
         - "Wait for numeric input (ConversationHandler state: WAITING_AMOUNT)"
@@ -60,13 +60,13 @@ commands:
         - "Wait for description (ConversationHandler state: WAITING_DESCRIPTION)"
         - "Save transaction"
         - "Send confirmation message"
-      
+
       duplicate_detection:
         - "Check for identical transaction within 60 seconds"
         - "If duplicate found: Send confirmation prompt with Yes/No buttons"
         - "If user confirms: Save with is_duplicate_confirmed=true"
         - "If user cancels: Abort transaction"
-    
+
     responses:
       success:
         template: transaction_confirmation
@@ -76,26 +76,26 @@ commands:
           - category: "Income"
           - description
           - timestamp (WITA)
-      
+
       error_invalid_amount:
         template: error_validation
         message: "❌ Invalid amount. Please enter numbers only (e.g., /income 100000 Description)"
-      
+
       error_amount_too_large:
         template: error_validation
         message: "❌ Amount exceeds maximum limit. Please verify and re-enter (max: Rp 10,000,000,000)"
-      
+
       error_unauthorized:
         template: error_auth
         message: "❌ Access denied. Please use /register to request access."
-    
+
     examples:
       - input: "/income 500000 Client payment for Project A"
         output: "Confirmation with TX20251218001, Rp 500,000, Income"
-      
+
       - input: "/income 1500000"
         output: "Confirmation with description 'No description'"
-      
+
       - input: "/income"
         output: "Sequential prompts for amount and description"
 
@@ -106,7 +106,7 @@ commands:
     priority: P1
     scope: all_private_chats
     authorization: approved_users_only
-    
+
     syntax:
       - /expense <amount> [description]
       - /expense  # Interactive mode
@@ -115,7 +115,7 @@ commands:
       - /expense_supplies <amount> [description]
       - /expense_marketing <amount> [description]
       - /expense_other <amount> [description]
-    
+
     parameters:
       - name: amount
         type: numeric
@@ -125,18 +125,18 @@ commands:
           - rule: max_value
             value: 10000000000
           - rule: numeric_formats
-      
+
       - name: description
         type: text
         required: false
         default: "Uncategorized expense"
-      
+
       - name: category
         type: enum
         required: true
         values: [Operational, Salaries, Supplies, Marketing, Other]
         selection_method: inline_keyboard
-    
+
     behavior:
       command_mode:
         - "Parse amount and description"
@@ -144,19 +144,19 @@ commands:
         - "Wait for category callback"
         - "Save transaction with selected category"
         - "Send confirmation"
-      
+
       quick_category_mode:
         - "Derive category from command suffix (e.g., /expense_supplies → Supplies)"
         - "Parse amount and description"
         - "Save transaction directly without keyboard"
         - "Send confirmation"
-      
+
       interactive_mode:
         - "Prompt for amount"
         - "Prompt for description"
         - "Show category selection keyboard"
         - "Save and confirm"
-    
+
     responses:
       category_selection:
         template: inline_keyboard_category
@@ -164,17 +164,17 @@ commands:
           - row: ["🏢 Operational", "👔 Salaries"]
           - row: ["📦 Supplies", "📢 Marketing"]
           - row: ["➕ Other"]
-      
+
       success:
         template: transaction_confirmation
         # Same structure as /income but with category emoji
-      
+
       errors: # Same as /income
-    
+
     examples:
       - input: "/expense 250000 Office supplies purchase"
         output: "Category keyboard → User selects Supplies → Confirmation"
-      
+
       - input: "/expense_supplies 150000 Paper and ink"
         output: "Direct confirmation with Supplies category (no keyboard)"
 
@@ -187,19 +187,19 @@ commands:
     priority: P2
     scope: all_private_chats
     authorization: approved_users_only
-    
+
     syntax:
       - /summary
       - /summary today  # Explicit current day
-    
+
     parameters: []
-    
+
     behavior:
       - "Query transactions for current day (WITA timezone)"
       - "Calculate total income, total expenses, net cash flow"
       - "Group expenses by category with subtotals"
       - "Format and send summary message"
-    
+
     responses:
       success:
         template: daily_summary
@@ -215,11 +215,11 @@ commands:
               Supplies: "Rp 150,000"
               Marketing: "Rp 200,000"
               Other: "Rp 50,000"
-      
+
       empty_day:
         template: daily_summary_empty
         message: "📊 Daily Summary - No transactions recorded today"
-    
+
     examples:
       - input: "/summary"
         output: "Formatted summary with all categories and totals"
@@ -231,13 +231,13 @@ commands:
     priority: P3
     scope: all_private_chats
     authorization: approved_users_only
-    
+
     syntax:
       - /history  # Last 10 transactions
       - /history <YYYY-MM-DD>  # Specific date
       - /history today
       - /history week  # Last 7 days
-    
+
     parameters:
       - name: filter
         type: text
@@ -248,13 +248,13 @@ commands:
             pattern: "YYYY-MM-DD"
           - rule: predefined_filters
             values: [today, week, month]
-    
+
     behavior:
       - "Query transactions based on filter"
       - "Paginate results (10 per page)"
       - "Show inline keyboard with pagination and filters"
       - "Handle callback queries for navigation"
-    
+
     responses:
       success:
         template: transaction_history
@@ -263,14 +263,14 @@ commands:
           buttons: ["◀️ Previous", "Next ▶️"]
         filters:
           buttons: ["Today", "This Week", "All"]
-      
+
       empty_results:
         message: "📋 No transactions found for the selected period"
-    
+
     examples:
       - input: "/history"
         output: "Last 10 transactions with pagination"
-      
+
       - input: "/history 2025-12-15"
         output: "All transactions from December 15, 2025"
 
@@ -281,11 +281,11 @@ commands:
     priority: P2
     scope: private_chats
     authorization: management_only
-    
+
     syntax:
       - /report <YYYY-MM-DD>
       - /report yesterday
-    
+
     parameters:
       - name: date
         type: date
@@ -295,28 +295,28 @@ commands:
             pattern: "YYYY-MM-DD"
           - rule: not_future
             message: "Cannot generate report for future dates"
-    
+
     behavior:
       - "Validate user has management role"
       - "Parse date (handle 'yesterday' keyword)"
       - "Generate daily summary for specified date"
       - "Send report to current chat"
-    
+
     responses:
       success:
         template: daily_report
         # Same format as automated 24:00 WITA report
-      
+
       error_future_date:
         message: "❌ Cannot generate report for future dates"
-      
+
       error_no_data:
         message: "ℹ️ No transactions found for {date}"
-    
+
     examples:
       - input: "/report 2025-12-17"
         output: "Complete daily report for December 17, 2025"
-      
+
       - input: "/report yesterday"
         output: "Report for previous day"
 
@@ -329,10 +329,10 @@ commands:
     priority: P2
     scope: all_private_chats
     authorization: any_user
-    
+
     syntax:
       - /register <employee_id>
-    
+
     parameters:
       - name: employee_id
         type: text
@@ -342,25 +342,25 @@ commands:
             message: "Employee ID must be alphanumeric"
           - rule: max_length
             value: 100
-    
+
     behavior:
       - "Check if user already registered"
       - "Create user record with status='pending'"
       - "Send notification to admin chat"
       - "Send confirmation to user"
-    
+
     responses:
       success:
         message: "✅ Registration request submitted. Employee ID: {employee_id}. An administrator will review your request."
-      
+
       already_registered:
         pending: "ℹ️ Your registration is pending approval"
         approved: "ℹ️ You are already registered and approved"
         rejected: "❌ Your previous registration was rejected. Please contact administrator"
-      
+
       admin_notification:
         message: "🔔 New registration request\n👤 User: {username}\n🆔 Employee ID: {employee_id}\n\nApprove: /approve {telegram_id}"
-    
+
     examples:
       - input: "/register EMP12345"
         output: "Confirmation to user + notification to admins"
@@ -372,22 +372,22 @@ commands:
     priority: P2
     scope: private_chats
     authorization: admin_only
-    
+
     syntax:
       - /approve <telegram_id>
       - /approve <telegram_id> <role>  # Optional role: staff|management|admin
-    
+
     parameters:
       - name: telegram_id
         type: integer
         required: true
-      
+
       - name: role
         type: enum
         required: false
         values: [staff, management, admin]
         default: staff
-    
+
     behavior:
       - "Validate requester is admin"
       - "Find user by telegram_id with status='pending'"
@@ -395,22 +395,22 @@ commands:
       - "Set user role"
       - "Send notification to approved user"
       - "Send confirmation to admin"
-    
+
     responses:
       success:
         admin_confirmation: "✅ User {telegram_id} approved as {role}"
         user_notification: "🎉 Your registration has been approved! You can now use the bot. Type /start to begin."
-      
+
       error_not_found:
         message: "❌ No pending registration found for telegram_id: {telegram_id}"
-      
+
       error_unauthorized:
         message: "❌ Admin access required"
-    
+
     examples:
       - input: "/approve 123456789"
         output: "User approved as staff + notifications sent"
-      
+
       - input: "/approve 123456789 management"
         output: "User approved with management role"
 
@@ -423,25 +423,25 @@ commands:
     priority: P3
     scope: all_private_chats
     authorization: any_user
-    
+
     syntax:
       - /start
-    
+
     parameters: []
-    
+
     behavior:
       - "Check user authorization status"
       - "If unauthorized: Show /register instruction"
       - "If authorized: Show main menu keyboard"
-    
+
     responses:
       authorized:
         template: welcome_message
         keyboard: main_menu
-      
+
       unauthorized:
         message: "👋 Welcome to Cash Flow Manager Bot!\n\nTo get started, please register:\n/register <your_employee_id>\n\nExample: /register EMP12345"
-    
+
     examples:
       - input: "/start" (authorized user)
         output: "Welcome message + main menu keyboard"
@@ -453,31 +453,31 @@ commands:
     priority: P3
     scope: all_private_chats
     authorization: any_user
-    
+
     syntax:
       - /help
       - /help <command>  # Detailed help for specific command
-    
+
     parameters:
       - name: command
         type: text
         required: false
-    
+
     behavior:
       - "If no parameter: Show all commands with brief descriptions"
       - "If command specified: Show detailed usage and examples"
-    
+
     responses:
       all_commands:
         template: help_menu
-      
+
       specific_command:
         template: help_detail
-    
+
     examples:
       - input: "/help"
         output: "List of all commands"
-      
+
       - input: "/help income"
         output: "Detailed /income usage with examples"
 
@@ -488,21 +488,21 @@ commands:
     priority: P3
     scope: all_private_chats
     authorization: approved_users_only
-    
+
     syntax:
       - /cancel
-    
+
     parameters: []
-    
+
     behavior:
       - "Exit current ConversationHandler state"
       - "Clear any pending input"
       - "Return to main menu"
-    
+
     responses:
       success:
         message: "❌ Operation cancelled"
-    
+
     examples:
       - input: "/cancel" (during transaction entry)
         output: "Cancelled + return to main menu"
@@ -520,7 +520,7 @@ callbacks:
       - "Complete transaction recording"
       - "Send confirmation"
       - "Update message to remove keyboard"
-  
+
   pagination:
     pattern: "^history_(prev|next)_(\d+)$"
     handler: handle_history_pagination
@@ -528,14 +528,14 @@ callbacks:
       - "Extract page number from callback_data"
       - "Query transactions for page"
       - "Update message with new page"
-  
+
   duplicate_confirmation:
     pattern: "^duplicate_(confirm|cancel)_(.+)$"
     handler: handle_duplicate_confirmation
     behavior:
       - "If confirm: Save transaction with is_duplicate_confirmed=true"
       - "If cancel: Abort and send cancellation message"
-  
+
   main_menu:
     pattern: "^menu_(income|expense|summary|history|settings)$"
     handler: handle_main_menu
@@ -551,21 +551,21 @@ validation_rules:
     regex: "^[0-9,\\.]+$"
     clean: "Remove commas and dots, convert to Decimal"
     check: "amount > 0"
-  
+
   max_value:
     check: "amount <= max_value"
-  
+
   numeric_formats:
     accepts:
       - "500000"       # Plain number
       - "500,000"      # Comma separator
       - "500.000"      # Dot separator (Indonesian)
     clean: "Remove all non-digit characters except decimal point"
-  
+
   date_format:
     regex: "^\\d{4}-\\d{2}-\\d{2}$"
     validation: "Must be valid date, not future"
-  
+
   alphanumeric:
     regex: "^[a-zA-Z0-9]+$"
 
@@ -579,17 +579,17 @@ error_handling:
     max_retries: 3
     backoff_seconds: [1, 5, 15]
     log_level: ERROR
-  
+
   database_error:
     action: rollback_and_notify
     notification: "⚠️ System error. Please try again. If problem persists, contact administrator."
     log_level: CRITICAL
-  
+
   validation_error:
     action: send_user_friendly_message
     include_example: true
     log_level: INFO
-  
+
   authorization_error:
     action: send_unauthorized_message
     log_level: WARNING
@@ -602,10 +602,10 @@ rate_limits:
   per_user:
     transactions: 100_per_day
     commands: 60_per_minute
-  
+
   global:
     messages: 30_per_second  # Telegram Bot API limit
-  
+
   enforcement:
     action: send_rate_limit_message
     message: "⏱️ Too many requests. Please wait a moment and try again."

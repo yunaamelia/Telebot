@@ -10,6 +10,7 @@
 This document validates technology choices for the Telegram cash flow bot, resolving all NEEDS CLARIFICATION items and documenting best practices. All selected technologies are production-ready, well-documented, and align with constitution principles (SOLID, TDD, Performance, Observability).
 
 **Key Decisions**:
+
 - **Bot Framework**: python-telegram-bot 20.x (native async, comprehensive, community support)
 - **Database**: PostgreSQL 15+ (ACID compliance, financial data reliability)
 - **Scheduler**: APScheduler 3.x (lightweight, WITA timezone support)
@@ -23,6 +24,7 @@ This document validates technology choices for the Telegram cash flow bot, resol
 ## 1. Python Telegram Bot Framework Comparison
 
 ### Requirements
+
 - Native async/await support (Python 3.11+ compatibility)
 - Inline keyboard support with callback handling
 - Conversation state management for sequential prompts
@@ -40,6 +42,7 @@ This document validates technology choices for the Telegram cash flow bot, resol
 ### Decision: python-telegram-bot 20.x
 
 **Rationale**:
+
 1. **Native Async**: Built on `asyncio`, no callback hell, cleaner code per SOLID principles
 2. **Mature & Stable**: Version 20.x is production-ready with 8+ years development history
 3. **Rich Features**: Built-in conversation handlers, inline keyboards, HTML formatting
@@ -47,6 +50,7 @@ This document validates technology choices for the Telegram cash flow bot, resol
 5. **Testing Support**: Well-documented testing patterns, mock support
 
 **Example Code Pattern**:
+
 ```python
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
@@ -61,8 +65,9 @@ async def income_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 **Performance**: Handles 1000+ msg/sec per bot instance (exceeds 30 msg/sec Telegram limit)
 
 **References**:
-- Official Docs: https://docs.python-telegram-bot.org/
-- GitHub: https://github.com/python-telegram-bot/python-telegram-bot
+
+- Official Docs: <https://docs.python-telegram-bot.org/>
+- GitHub: <https://github.com/python-telegram-bot/python-telegram-bot>
 - Production Usage: 10k+ bots in production globally
 
 ---
@@ -70,6 +75,7 @@ async def income_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 ## 2. Database Selection: PostgreSQL vs SQLite
 
 ### Requirements
+
 - ACID compliance for financial transactions (zero data loss)
 - Support for 180k+ transactions (1 year active data)
 - Concurrent user writes (20 users simultaneously)
@@ -92,6 +98,7 @@ async def income_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 ### Decision: PostgreSQL 15+
 
 **Rationale**:
+
 1. **Concurrent Writes**: 20 users recording transactions simultaneously requires MVCC, not database-level locks
 2. **Financial Data Integrity**: PostgreSQL's proven reliability in banking/finance industry (ACID + WAL)
 3. **Scalability**: Growth beyond 500 tx/day easily handled (tested to millions of rows)
@@ -99,29 +106,33 @@ async def income_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 5. **Backup & Recovery**: Point-in-time recovery (PITR) crucial for financial audit trail
 
 **SQLite Rejected Because**:
+
 - Write concurrency issues (entire DB locks during INSERT)
 - No built-in replication for disaster recovery
 - Limited query optimization for complex reports
 
 **Schema Optimization**:
+
 ```sql
 -- Optimized indexes for query performance
 CREATE INDEX idx_transactions_date ON transactions(transaction_date);
 CREATE INDEX idx_transactions_user ON transactions(user_id);
 CREATE INDEX idx_transactions_category ON transactions(category_id);
-CREATE INDEX idx_active_data ON transactions(transaction_date) 
+CREATE INDEX idx_active_data ON transactions(transaction_date)
     WHERE transaction_date > NOW() - INTERVAL '1 year'; -- Partial index for active data
 ```
 
 **References**:
-- PostgreSQL Performance: https://www.postgresql.org/docs/15/performance-tips.html
-- Financial Applications: https://www.cybertec-postgresql.com/en/financial-data-postgresql/
+
+- PostgreSQL Performance: <https://www.postgresql.org/docs/15/performance-tips.html>
+- Financial Applications: <https://www.cybertec-postgresql.com/en/financial-data-postgresql/>
 
 ---
 
 ## 3. Scheduling: APScheduler vs Celery
 
 ### Requirements
+
 - Execute daily report at exactly 24:00 WITA (16:00 UTC)
 - Timezone-aware scheduling (WITA = UTC+8, no DST)
 - Retry logic for failed report delivery
@@ -143,6 +154,7 @@ CREATE INDEX idx_active_data ON transactions(transaction_date)
 ### Decision: APScheduler 3.x
 
 **Rationale**:
+
 1. **Simplicity**: Single Python process, no external dependencies (Redis/RabbitMQ)
 2. **Sufficient Scale**: Only 1 scheduled job (daily report at 24:00 WITA), no distributed execution needed
 3. **Testing**: Easy to mock `datetime.now()` for timezone tests
@@ -150,11 +162,13 @@ CREATE INDEX idx_active_data ON transactions(transaction_date)
 5. **Cost**: Zero additional services to maintain/monitor
 
 **Celery Rejected Because**:
+
 - Overkill for single scheduled job (adds broker, workers, monitoring)
 - Increased operational complexity violates "Code is a Liability" principle
 - No requirement for distributed task execution in spec
 
 **Implementation Pattern**:
+
 ```python
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -175,6 +189,7 @@ scheduler.add_job(
 ```
 
 **Testing Strategy**:
+
 ```python
 import pytest
 from freezegun import freeze_time
@@ -189,14 +204,16 @@ def test_transaction_included_in_daily_report():
 ```
 
 **References**:
-- APScheduler Docs: https://apscheduler.readthedocs.io/
-- Timezone Handling: https://apscheduler.readthedocs.io/en/stable/userguide.html#configuring-the-timezone
+
+- APScheduler Docs: <https://apscheduler.readthedocs.io/>
+- Timezone Handling: <https://apscheduler.readthedocs.io/en/stable/userguide.html#configuring-the-timezone>
 
 ---
 
 ## 4. Telegram API Formatting & Fira Code Font Integration
 
 ### Requirements (from user request)
+
 - Integrate Fira Code font for enhanced UI readability
 - Professional message layouts with emoji
 - Mobile-optimized formatting
@@ -205,11 +222,13 @@ def test_transaction_included_in_daily_report():
 ### Telegram Formatting Limitations Research
 
 **Official Telegram Bot API Formatting Support**:
+
 - **Markdown** (legacy, deprecated)
 - **MarkdownV2** (current standard)
 - **HTML** (recommended for complex formatting)
 
 **Supported Styles** (all modes):
+
 - Bold: `<b>text</b>` or `*text*`
 - Italic: `<i>text</i>` or `_text_`
 - Underline: `<u>text</u>`
@@ -230,6 +249,7 @@ def test_transaction_included_in_daily_report():
 ### Decision: Option C - Default Monospace (MVP), Option B (Future)
 
 **Rationale**:
+
 1. **MVP Focus**: Fira Code is aesthetic enhancement, not functional requirement
 2. **Performance**: Image generation adds 100-500ms latency, violates <2s response SLA
 3. **Accessibility**: Text messages screen-reader friendly, images are not
@@ -237,6 +257,7 @@ def test_transaction_included_in_daily_report():
 5. **Future Path**: Telegram Web App provides full Fira Code + charts/graphs (addresses spec "Out of Scope: Advanced reporting")
 
 **Recommended Message Formatting**:
+
 ```python
 def format_transaction_confirmation(tx: Transaction) -> str:
     """Format transaction confirmation with professional layout"""
@@ -255,14 +276,16 @@ def format_transaction_confirmation(tx: Transaction) -> str:
 **Fira Code woff2 Assets**: Preserved for future Telegram Web App integration (Phase 2 roadmap)
 
 **Documentation**:
-- Telegram Formatting: https://core.telegram.org/bots/api#formatting-options
-- Web Apps: https://core.telegram.org/bots/webapps
+
+- Telegram Formatting: <https://core.telegram.org/bots/api#formatting-options>
+- Web Apps: <https://core.telegram.org/bots/webapps>
 
 ---
 
 ## 5. Testing Strategy for Async Telegram Bots
 
 ### Requirements (Constitution Principle II: TDD)
+
 - ≥80% line coverage (100% for financial calculations)
 - Test pyramid: 70% unit / 20% integration / 10% E2E
 - Fast test execution (<30s for unit tests)
@@ -282,6 +305,7 @@ def format_transaction_confirmation(tx: Transaction) -> str:
 ### Test Architecture
 
 **Unit Tests** (70% of test suite):
+
 ```python
 # tests/unit/services/test_transaction_service.py
 import pytest
@@ -304,6 +328,7 @@ async def test_validate_amount_rejects_invalid_input():
 ```
 
 **Integration Tests** (20% of test suite):
+
 ```python
 # tests/integration/test_database.py
 import pytest
@@ -322,17 +347,18 @@ async def test_transaction_repository_crud(postgres_container):
     """Test transaction CRUD operations with real database"""
     engine = create_engine(postgres_container.get_connection_url())
     repo = TransactionRepository(engine)
-    
+
     # Create transaction
     tx = await repo.create(amount=500000, type="income", description="Test")
     assert tx.transaction_id is not None
-    
+
     # Read transaction
     retrieved = await repo.get_by_id(tx.transaction_id)
     assert retrieved.amount == 500000
 ```
 
 **E2E Tests** (10% of test suite):
+
 ```python
 # tests/e2e/test_user_workflows.py
 import pytest
@@ -345,7 +371,7 @@ async def test_income_recording_workflow_e2e(bot_application: Application):
     # Simulate user sending /income command
     update = create_mock_update(text="/income 500000 Client payment")
     await bot_application.process_update(update)
-    
+
     # Assert confirmation message sent
     assert "💰 Income Recorded" in last_bot_message()
     assert "Rp 500,000" in last_bot_message()
@@ -354,6 +380,7 @@ async def test_income_recording_workflow_e2e(bot_application: Application):
 ### TDD Workflow Example
 
 **Red-Green-Refactor for Financial Calculation**:
+
 ```python
 # Step 1: RED - Write failing test first
 def test_calculate_net_cash_flow():
@@ -411,14 +438,16 @@ jobs:
 ```
 
 **References**:
-- pytest-asyncio: https://pytest-asyncio.readthedocs.io/
-- Testcontainers: https://testcontainers-python.readthedocs.io/
+
+- pytest-asyncio: <https://pytest-asyncio.readthedocs.io/>
+- Testcontainers: <https://testcontainers-python.readthedocs.io/>
 
 ---
 
 ## 6. Docker Deployment Best Practices
 
 ### Requirements
+
 - Production-grade container image
 - Fast build times (layer caching)
 - Minimal attack surface (Alpine base)
@@ -539,6 +568,7 @@ WantedBy=multi-user.target
 ```
 
 **Deployment Commands**:
+
 ```bash
 # Initial setup
 sudo systemctl daemon-reload
@@ -555,8 +585,9 @@ docker-compose up -d
 ```
 
 **References**:
-- Docker Best Practices: https://docs.docker.com/develop/dev-best-practices/
-- Multi-Stage Builds: https://docs.docker.com/build/building/multi-stage/
+
+- Docker Best Practices: <https://docs.docker.com/develop/dev-best-practices/>
+- Multi-Stage Builds: <https://docs.docker.com/build/building/multi-stage/>
 
 ---
 
@@ -565,6 +596,7 @@ docker-compose up -d
 ### Code Quality (Constitution Principle I)
 
 **File Organization**:
+
 ```
 src/bot/
 ├── handlers/         # Thin layer: parse input, call service, format response
@@ -575,12 +607,13 @@ src/bot/
 ```
 
 **Dependency Injection**:
+
 ```python
 # Good: Testable, follows Dependency Inversion Principle
 class TransactionService:
     def __init__(self, repository: TransactionRepository):
         self.repository = repository
-    
+
     async def record_income(self, amount: Decimal, description: str):
         # Business logic here
         return await self.repository.create(...)
@@ -595,6 +628,7 @@ class TransactionService:
 ### Testing (Constitution Principle II)
 
 **Test Naming Convention**:
+
 ```python
 # Format: test_<method>_<scenario>_<expected_result>
 def test_validate_amount_accepts_numeric_string():
@@ -608,6 +642,7 @@ def test_calculate_net_cash_flow_returns_difference():
 ```
 
 **Fixture Reuse**:
+
 ```python
 # conftest.py - Shared fixtures
 @pytest.fixture
@@ -627,6 +662,7 @@ async def db_session(postgres_container):
 ### Observability (Constitution Principle V)
 
 **Structured Logging**:
+
 ```python
 import structlog
 
@@ -639,7 +675,7 @@ async def record_income(user_id: int, amount: Decimal):
         amount=float(amount),
         correlation_id=generate_correlation_id()
     )
-    
+
     try:
         tx = await repository.create(...)
         logger.info(
@@ -661,6 +697,7 @@ async def record_income(user_id: int, amount: Decimal):
 ```
 
 **Metrics Collection**:
+
 ```python
 from prometheus_client import Counter, Histogram
 
@@ -684,6 +721,7 @@ async def income_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 ### Security Best Practices
 
 **Input Validation**:
+
 ```python
 from decimal import Decimal, InvalidOperation
 
@@ -691,22 +729,23 @@ def validate_amount(input_str: str) -> Decimal:
     """Validate and parse transaction amount"""
     # Remove common separators
     cleaned = input_str.replace(',', '').replace('.', '').replace(' ', '')
-    
+
     try:
         amount = Decimal(cleaned)
     except InvalidOperation:
         raise ValueError(f"Invalid amount: {input_str}")
-    
+
     if amount <= 0:
         raise ValueError("Amount must be positive")
-    
+
     if amount > Decimal('10000000000'):  # 10 billion max per FR-022
         raise ValueError("Amount exceeds maximum limit")
-    
+
     return amount
 ```
 
 **SQL Injection Prevention**:
+
 ```python
 # Good: SQLAlchemy ORM prevents injection
 async def get_transactions_by_date(date: datetime.date):
@@ -775,6 +814,7 @@ async def get_transactions_by_date(date_str: str):
 **Ready to Proceed**: All technology choices validated, zero NEEDS CLARIFICATION remaining.
 
 **Phase 1 Deliverables**:
+
 1. **data-model.md**: PostgreSQL schema with SQLAlchemy models
 2. **contracts/commands.yaml**: All 15+ bot commands documented
 3. **contracts/messages.yaml**: Message templates with HTML formatting

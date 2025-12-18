@@ -18,6 +18,7 @@
 - **File paths**: All paths are absolute from repository root
 
 **Path Conventions** (Single project per plan.md):
+
 - Source code: `src/bot/`, `src/database/`, `src/scheduler/`, `src/config/`
 - Tests: `tests/unit/`, `tests/integration/`, `tests/e2e/`
 - Migrations: `migrations/`
@@ -29,19 +30,19 @@
 
 **Purpose**: Project initialization and basic structure - REQUIRED before any development
 
-- [ ] T001 Create project directory structure per plan.md §Project Structure in cashflow-bot/
-- [ ] T002 Initialize Python 3.11 virtual environment with venv in cashflow-bot/
-- [ ] T003 [P] Create requirements.txt with python-telegram-bot==20.7, SQLAlchemy==2.0.25, APScheduler==3.10.4, pytz==2023.3
-- [ ] T004 [P] Create requirements-dev.txt with pytest==7.4.3, pytest-asyncio==0.21.1, pytest-cov==4.1.0, pylint==3.0.3, flake8==6.1.0
-- [ ] T005 [P] Configure .gitignore for Python (venv/, __pycache__/, .env, *.pyc)
-- [ ] T006 [P] Create .env.example with TELEGRAM_BOT_TOKEN, DATABASE_URL, MANAGEMENT_CHAT_ID, TIMEZONE=Asia/Makassar
-- [ ] T007 [P] Configure .pylintrc with complexity limit ≤15, function length ≤50 LOC per constitution
-- [ ] T008 [P] Configure pytest.ini with asyncio_mode=auto, testpaths=tests, coverage ≥80%
-- [ ] T009 Create docker-compose.yml with PostgreSQL 15.5 service and bot service definitions
-- [ ] T010 Create Dockerfile with multi-stage build (builder + runtime) per plan.md §Phase 9
-- [ ] T011 [P] Initialize Alembic with alembic init migrations/ for database migrations
-- [ ] T012 [P] Create README.md with project overview, quick start, development setup
-- [ ] T013 [P] Setup GitHub Actions workflow in .github/workflows/ci.yml for lint, test, coverage gates
+- [X] T001 Create project directory structure per plan.md §Project Structure in cashflow-bot/
+- [X] T002 Initialize Python 3.11 virtual environment with venv in cashflow-bot/
+- [X] T003 [P] Create requirements.txt with python-telegram-bot==20.7, SQLAlchemy==2.0.25, APScheduler==3.10.4, pytz==2023.3
+- [X] T004 [P] Create requirements-dev.txt with pytest==7.4.3, pytest-asyncio==0.21.1, pytest-cov==4.1.0, pylint==3.0.3, flake8==6.1.0
+- [X] T005 [P] Configure .gitignore for Python (venv/, **pycache**/, .env, *.pyc)
+- [X] T006 [P] Create .env.example with TELEGRAM_BOT_TOKEN, DATABASE_URL, MANAGEMENT_CHAT_ID, TIMEZONE=Asia/Makassar
+- [X] T007 [P] Configure .pylintrc with complexity limit ≤15, function length ≤50 LOC per constitution
+- [X] T008 [P] Configure pytest.ini with asyncio_mode=auto, testpaths=tests, coverage ≥80%
+- [X] T009 Create docker-compose.yml with PostgreSQL 15.5 service and bot service definitions
+- [X] T010 Create Dockerfile with multi-stage build (builder + runtime) per plan.md §Phase 9
+- [X] T011 [P] Initialize Alembic with alembic init migrations/ for database migrations
+- [X] T012 [P] Create README.md with project overview, quick start, development setup
+- [X] T013 [P] Setup GitHub Actions workflow in .github/workflows/ci.yml for lint, test, coverage gates
 
 **Checkpoint**: ✅ Project structure ready - can now setup foundational infrastructure
 
@@ -55,42 +56,42 @@
 
 ### Database Foundation
 
-- [ ] T014 Create base database connection in src/database/connection.py with PostgreSQL connection pooling
-- [ ] T015 Create session management in src/database/session.py with SQLAlchemy async session factory
-- [ ] T016 [P] Create users table migration in migrations/versions/001_create_users.py per data-model.md
-- [ ] T017 [P] Create categories table migration in migrations/versions/002_create_categories.py with seed data
-- [ ] T018 Create transactions table migration in migrations/versions/003_create_transactions.py with all indexes
-- [ ] T019 Create daily_summaries table migration in migrations/versions/004_create_daily_summaries.py with JSONB support
-- [ ] T020 Seed categories with INSERT statements in migration: Income, Operational, Salaries, Supplies, Marketing, Other
+- [X] T014 Create base database connection in src/database/connection.py with PostgreSQL connection pooling
+- [X] T015 Create session management in src/database/session.py with SQLAlchemy async session factory
+- [X] T016 [P] Create users table migration in migrations/versions/001_create_users.py per data-model.md
+- [X] T017 [P] Create categories table migration in migrations/versions/002_create_categories.py with seed data
+- [X] T018 Create transactions table migration in migrations/versions/003_create_transactions.py with all indexes
+- [X] T019 Create daily_summaries table migration in migrations/versions/004_create_daily_summaries.py with JSONB support
+- [X] T020 Seed categories with INSERT statements in migration: Income, Operational, Salaries, Supplies, Marketing, Other
 
 ### Model Layer (Domain Objects)
 
-- [ ] T021 [P] Create User model in src/bot/models/user.py with SQLAlchemy ORM per data-model.md §User Model
-- [ ] T022 [P] Create Category model in src/bot/models/category.py with CHECK constraints
-- [ ] T023 [P] Create Transaction model in src/bot/models/transaction.py with all validation constraints
-- [ ] T024 [P] Create DailySummary model in src/bot/models/report.py with computed net_cash_flow column
-- [ ] T025 Create __init__.py in src/bot/models/ to export all models
+- [X] T021 [P] Create User model in src/bot/models/user.py with SQLAlchemy ORM per data-model.md §User Model
+- [X] T022 [P] Create Category model in src/bot/models/category.py with CHECK constraints
+- [X] T023 [P] Create Transaction model in src/bot/models/transaction.py with all validation constraints
+- [X] T024 [P] Create DailySummary model in src/bot/models/report.py with computed net_cash_flow column
+- [X] T025 Create **init**.py in src/bot/models/ to export all models
 
 ### Repository Layer (Data Access)
 
-- [ ] T026 [P] Create UserRepository in src/bot/repositories/user_repository.py with CRUD operations
-- [ ] T027 [P] Create CategoryRepository in src/bot/repositories/category_repository.py with caching
-- [ ] T028 Create TransactionRepository in src/bot/repositories/transaction_repository.py with duplicate detection query
-- [ ] T029 Create __init__.py in src/bot/repositories/ to export all repositories
+- [X] T026 [P] Create UserRepository in src/bot/repositories/user_repository.py with CRUD operations
+- [X] T027 [P] Create CategoryRepository in src/bot/repositories/category_repository.py with caching
+- [X] T028 Create TransactionRepository in src/bot/repositories/transaction_repository.py with duplicate detection query
+- [X] T029 Create **init**.py in src/bot/repositories/ to export all repositories
 
 ### Core Utilities
 
-- [ ] T030 [P] Create currency formatter in src/bot/utils/formatters.py with Rp prefix and thousand separators per FR-017
-- [ ] T031 [P] Create WITA timezone handler in src/bot/utils/timezone.py with UTC↔WITA conversion
-- [ ] T032 [P] Create amount validator in src/bot/utils/validators.py with numeric parsing, max 10B validation per FR-022
-- [ ] T033 Create transaction ID generator in src/bot/utils/formatters.py with TX20251218001 format per FR-004
-- [ ] T034 Create __init__.py in src/bot/utils/ to export all utilities
+- [X] T030 [P] Create currency formatter in src/bot/utils/formatters.py with Rp prefix and thousand separators per FR-017
+- [X] T031 [P] Create WITA timezone handler in src/bot/utils/timezone.py with UTC↔WITA conversion
+- [X] T032 [P] Create amount validator in src/bot/utils/validators.py with numeric parsing, max 10B validation per FR-022
+- [X] T033 Create transaction ID generator in src/bot/utils/formatters.py with TX20251218001 format per FR-004
+- [X] T034 Create **init**.py in src/bot/utils/ to export all utilities
 
 ### Configuration & Logging
 
-- [ ] T035 Create Pydantic settings in src/config/settings.py with environment variable loading
-- [ ] T036 [P] Configure structured logging in src/config/logging.py with JSON format, correlation IDs per constitution
-- [ ] T037 Create __init__.py in src/config/ to export settings and logging
+- [X] T035 Create Pydantic settings in src/config/settings.py with environment variable loading
+- [X] T036 [P] Configure structured logging in src/config/logging.py with JSON format, correlation IDs per constitution
+- [X] T037 Create **init**.py in src/config/ to export settings and logging
 
 **Checkpoint**: ✅ Foundation complete - User story implementation can now begin in parallel
 
@@ -447,20 +448,24 @@ Phase 12 (Deployment) ← Final phase
 ### Parallel Opportunities
 
 **Setup Phase (All can run in parallel)**:
+
 - T003, T004, T005, T006, T007, T008, T011, T012, T013
 
 **Foundational Phase (Within categories can run in parallel)**:
+
 - Migrations: T016, T017
 - Models: T021, T022, T023, T024
 - Repositories: T026, T027
 - Utilities: T030, T031, T032, T036
 
 **User Stories (Can run in parallel after Foundation)**:
+
 - Different developers can work on US1, US2, US3, US4, US5, US6 simultaneously
 - Within each story: All tests marked [P] can run in parallel
 - Within each story: All models marked [P] can run in parallel
 
 **Polish Phase (Many can run in parallel)**:
+
 - T138, T139, T142, T143, T146, T147, T150, T151, T154, T155, T158, T159
 
 ---
@@ -470,6 +475,7 @@ Phase 12 (Deployment) ← Final phase
 **Step 1**: Foundation complete ✅
 
 **Step 2**: Parallel test writing (can all start simultaneously):
+
 - Developer A: T038 (amount parsing tests)
 - Developer A: T039 (transaction ID tests)
 - Developer A: T040 (service tests)
@@ -479,12 +485,14 @@ Phase 12 (Deployment) ← Final phase
 **Step 3**: All tests FAIL ✅ (TDD Red phase)
 
 **Step 4**: Parallel implementation (some can run simultaneously):
+
 - Developer A: T043 (TransactionService)
 - Developer A: T044 (NotificationService)
 - Developer B: T045 (income handler)
 - Developer C: T047 (conversation flow)
 
 **Step 5**: Sequential integration:
+
 - T048 (duplicate detection) - depends on T043
 - T049 (duplicate keyboard) - depends on T048
 - T050 (error handling) - depends on T045
@@ -503,10 +511,12 @@ Phase 12 (Deployment) ← Final phase
 ### MVP-First Approach
 
 **Week 1-2: Foundation**
+
 - Phase 1: Setup (1-2 days)
 - Phase 2: Foundational (3-4 days)
 
 **Week 2-3: MVP (P1 Stories)**
+
 - Phase 3: US1 - Income Recording (3-4 days)
 - Phase 4: US2 - Expense Recording (3-4 days)
 - Phase 9: Authentication (2-3 days)
@@ -514,16 +524,19 @@ Phase 12 (Deployment) ← Final phase
 **Checkpoint**: MVP delivers basic transaction recording with controlled access
 
 **Week 4: P2 Stories**
+
 - Phase 5: US3 - Daily Summary (2-3 days)
 - Phase 6: US4 - Automated Reports (3-4 days)
 
 **Checkpoint**: Core financial management complete with automation
 
 **Week 5: P3 Stories (Optional for MVP)**
+
 - Phase 7: US5 - Keyboards (2-3 days)
 - Phase 8: US6 - History (2-3 days)
 
 **Week 6-7: Polish & Deployment**
+
 - Phase 10: Help (1 day)
 - Phase 11: Polish (3-4 days)
 - Phase 12: Deployment (2-3 days)
@@ -533,6 +546,7 @@ Phase 12 (Deployment) ← Final phase
 ### Incremental Delivery
 
 Each user story is independently deployable:
+
 1. Deploy US1 → Staff can record income
 2. Deploy US2 → Staff can record income + expenses
 3. Deploy US3 → Staff can view daily summary
@@ -543,6 +557,7 @@ Each user story is independently deployable:
 ### Quality Gates
 
 Before moving to next phase:
+
 - ✅ All tests PASS (TDD Green)
 - ✅ Coverage ≥80% (100% for financial logic)
 - ✅ Pylint/flake8 clean
@@ -558,6 +573,7 @@ Before moving to next phase:
 **Parallelizable Tasks**: 68 (40% can run in parallel)
 
 **User Stories**:
+
 - US1 (Income): 14 tasks (5 tests + 9 implementation)
 - US2 (Expense): 14 tasks (4 tests + 10 implementation)
 - US3 (Summary): 12 tasks (4 tests + 8 implementation)

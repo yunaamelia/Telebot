@@ -12,14 +12,14 @@
 
 formatting:
   parse_mode: HTML  # Use HTML for all messages
-  
+
   styles:
     bold: "<b>{text}</b>"
     italic: "<i>{text}</i>"
     monospace: "<code>{text}</code>"
     monospace_block: "<pre>{text}</pre>"
     underline: "<u>{text}</u>"
-  
+
   emoji_conventions:
     income: "💰"
     expense: "💸"
@@ -32,12 +32,12 @@ formatting:
     notification: "🔔"
     celebration: "🎉"
     time: "⏱️"
-  
+
   currency:
     symbol: "Rp"
     format: "{symbol} {amount:,.0f}"  # e.g., "Rp 1,500,000"
     separator: ","
-  
+
   date:
     format: "%d %b %Y"  # e.g., "18 Dec 2025"
     datetime_format: "%d %b %Y %H:%M WITA"
@@ -49,35 +49,35 @@ formatting:
 messages:
   transaction_confirmation_income: |
     💰 <b>Income Recorded</b>
-    
+
     <b>Amount:</b> <code>{amount}</code>
     <b>Category:</b> Income
     <b>Description:</b> {description}
     <b>Date:</b> {timestamp}
     <b>ID:</b> <code>{transaction_id}</code>
-    
+
     ✅ Transaction saved successfully
-  
+
   transaction_confirmation_expense: |
     💸 <b>Expense Recorded</b>
-    
+
     <b>Amount:</b> <code>{amount}</code>
     <b>Category:</b> {category_emoji} {category_name}
     <b>Description:</b> {description}
     <b>Date:</b> {timestamp}
     <b>ID:</b> <code>{transaction_id}</code>
-    
+
     ✅ Transaction saved successfully
 
   # Example rendered output:
   # 💰 Income Recorded
-  # 
+  #
   # Amount: Rp 500,000
   # Category: Income
   # Description: Client payment for Project A
   # Date: 18 Dec 2025 14:30 WITA
   # ID: TX20251218001
-  # 
+  #
   # ✅ Transaction saved successfully
 
 # ============================================================================
@@ -86,32 +86,32 @@ messages:
 
   prompt_amount: |
     💰 <b>Enter Transaction Amount</b>
-    
+
     Please enter the amount in Rupiah (numbers only):
-    
+
     <b>Examples:</b>
     • 500000
     • 1500000
     • 2500000
-    
+
     Or send /cancel to abort
-  
+
   prompt_description: |
     📝 <b>Enter Description</b>
-    
+
     Please enter a brief description for this transaction:
-    
+
     <b>Examples:</b>
     • "Client payment for Project A"
     • "Office rent - December"
     • "Employee bonuses"
-    
+
     Send /skip to continue without description
     Or /cancel to abort
-  
+
   prompt_category_selection: |
     📂 <b>Select Expense Category</b>
-    
+
     Please choose the appropriate category for this expense:
 
 # ============================================================================
@@ -121,23 +121,23 @@ messages:
   daily_summary: |
     📊 <b>Daily Financial Summary</b>
     <b>Date:</b> {date}
-    
+
     ━━━━━━━━━━━━━━━━━━━━━━━
-    
+
     💰 <b>Total Income:</b> <code>{total_income}</code>
     💸 <b>Total Expenses:</b> <code>{total_expenses}</code>
-    
+
     ━━━━━━━━━━━━━━━━━━━━━━━
-    
+
     {net_cash_flow_indicator} <b>Net Cash Flow:</b> <code>{net_cash_flow}</code>
-    
+
     ━━━━━━━━━━━━━━━━━━━━━━━
-    
+
     <b>Expense Breakdown:</b>
     {category_breakdown}
-    
+
     ━━━━━━━━━━━━━━━━━━━━━━━
-    
+
     📈 <b>Transactions:</b> {transaction_count} total ({income_count} income, {expense_count} expenses)
 
   # Variables:
@@ -164,11 +164,11 @@ messages:
   daily_summary_empty: |
     📊 <b>Daily Financial Summary</b>
     <b>Date:</b> {date}
-    
+
     ━━━━━━━━━━━━━━━━━━━━━━━
-    
+
     ℹ️ No transactions recorded today
-    
+
     Use /income or /expense to record transactions
     Or tap the buttons below ⬇️
 
@@ -178,30 +178,30 @@ messages:
     🌙 <b>Daily Financial Report</b>
     <b>Report Date:</b> {date}
     <b>Generated:</b> {generated_at}
-    
+
     ━━━━━━━━━━━━━━━━━━━━━━━
-    
+
     💰 <b>Total Income:</b> <code>{total_income}</code>
     💸 <b>Total Expenses:</b> <code>{total_expenses}</code>
-    
+
     ━━━━━━━━━━━━━━━━━━━━━━━
-    
+
     {net_cash_flow_indicator} <b>Net Cash Flow:</b> <code>{net_cash_flow}</code>
-    
+
     ━━━━━━━━━━━━━━━━━━━━━━━
-    
+
     <b>Expense Details:</b>
     {category_breakdown}
-    
+
     ━━━━━━━━━━━━━━━━━━━━━━━
-    
+
     📈 <b>Transaction Summary:</b>
     • Total: {transaction_count} transactions
     • Income: {income_count} transactions
     • Expenses: {expense_count} transactions
-    
+
     ━━━━━━━━━━━━━━━━━━━━━━━
-    
+
     📅 <i>This report was automatically generated at 24:00 WITA</i>
 
 # ============================================================================
@@ -212,7 +212,7 @@ messages:
     📋 <b>Transaction History</b>
     <b>Filter:</b> {filter_description}
     <b>Page:</b> {current_page} of {total_pages}
-    
+
     ━━━━━━━━━━━━━━━━━━━━━━━
 
   transaction_history_item: |
@@ -228,16 +228,16 @@ messages:
   # 18 Dec 2025 14:30 · TX20251218001
 
   transaction_history_footer: |
-    
+
     ━━━━━━━━━━━━━━━━━━━━━━━
-    
+
     Showing {start}-{end} of {total} transactions
 
   transaction_history_empty: |
     📋 <b>Transaction History</b>
-    
+
     ℹ️ No transactions found for the selected period
-    
+
     Try a different filter or date range
 
 # ============================================================================
@@ -246,105 +246,105 @@ messages:
 
   welcome_authorized: |
     👋 <b>Welcome to Cash Flow Manager!</b>
-    
+
     Track your company's daily income and expenses with ease.
-    
+
     <b>Quick Actions:</b>
     💰 Record income - /income
     💸 Record expense - /expense
     📊 View summary - /summary
     📋 View history - /history
-    
+
     ℹ️ Need help? Send /help
-    
+
     <i>Or use the menu buttons below ⬇️</i>
 
   welcome_unauthorized: |
     👋 <b>Welcome to Cash Flow Manager!</b>
-    
+
     To access this bot, you need to register first.
-    
+
     <b>Registration Steps:</b>
     1. Obtain your employee ID from your manager
     2. Send registration command:
        <code>/register YOUR_EMPLOYEE_ID</code>
-    
+
     <b>Example:</b>
     <code>/register EMP12345</code>
-    
+
     After registration, an administrator will review and approve your request.
 
   help_menu: |
     ℹ️ <b>Available Commands</b>
-    
+
     <b>💰 Transaction Commands:</b>
     /income - Record income
     /expense - Record expense
     /summary - View daily summary
     /history - View transaction history
-    
+
     <b>👤 Account Commands:</b>
     /register - Request bot access
     /start - Show main menu
     /help - Show this help message
     /cancel - Cancel current operation
-    
+
     <b>📊 Management Commands:</b>
     /report - Generate manual report (management only)
     /approve - Approve user registration (admin only)
-    
+
     <b>Need detailed help?</b>
     Send <code>/help COMMAND</code>
     Example: <code>/help income</code>
 
   help_detail_income: |
     ℹ️ <b>Command: /income</b>
-    
+
     <b>Description:</b>
     Record income transaction
-    
+
     <b>Usage:</b>
     <code>/income AMOUNT DESCRIPTION</code>
     <code>/income AMOUNT</code>
     <code>/income</code> (interactive mode)
-    
+
     <b>Examples:</b>
     • <code>/income 500000 Client payment</code>
     • <code>/income 1500000</code>
     • <code>/income</code> then follow prompts
-    
+
     <b>Amount Formats:</b>
     ✅ 500000
     ✅ 500,000
     ✅ 500.000
-    
+
     <b>Limits:</b>
     • Maximum: Rp 10,000,000,000
 
   help_detail_expense: |
     ℹ️ <b>Command: /expense</b>
-    
+
     <b>Description:</b>
     Record expense transaction with category
-    
+
     <b>Usage:</b>
     <code>/expense AMOUNT DESCRIPTION</code>
     <code>/expense</code> (interactive mode)
-    
+
     <b>Quick Category Shortcuts:</b>
     • <code>/expense_operational AMOUNT DESC</code>
     • <code>/expense_salaries AMOUNT DESC</code>
     • <code>/expense_supplies AMOUNT DESC</code>
     • <code>/expense_marketing AMOUNT DESC</code>
     • <code>/expense_other AMOUNT DESC</code>
-    
+
     <b>Categories:</b>
     🏢 Operational
     👔 Salaries
     📦 Supplies
     📢 Marketing
     ➕ Other
-    
+
     <b>Example:</b>
     <code>/expense 250000 Office rent</code>
     → Select category → Confirmation
@@ -355,76 +355,76 @@ messages:
 
   error_validation_amount: |
     ❌ <b>Invalid Amount</b>
-    
+
     Please enter a valid numeric amount.
-    
+
     <b>✅ Valid formats:</b>
     • 500000
     • 500,000
     • 500.000
-    
+
     <b>❌ Invalid:</b>
     • abc
     • 500k
     • -100000
-    
+
     <b>Example:</b>
     <code>/income 500000 Client payment</code>
 
   error_amount_too_large: |
     ❌ <b>Amount Exceeds Limit</b>
-    
+
     The maximum transaction amount is <b>Rp 10,000,000,000</b>
-    
+
     Please verify the amount and try again.
-    
+
     If this is correct, please contact your administrator.
 
   error_unauthorized: |
     ❌ <b>Access Denied</b>
-    
+
     You don't have permission to use this bot.
-    
+
     <b>To request access:</b>
     <code>/register YOUR_EMPLOYEE_ID</code>
-    
+
     Contact your administrator if you need assistance.
 
   error_admin_only: |
     ❌ <b>Admin Access Required</b>
-    
+
     This command is only available to administrators.
-    
+
     Contact your system administrator if you need help.
 
   error_management_only: |
     ❌ <b>Management Access Required</b>
-    
+
     This command is only available to management users.
 
   error_database: |
     ⚠️ <b>System Error</b>
-    
+
     A database error occurred. Please try again in a moment.
-    
+
     If the problem persists, contact your administrator.
-    
+
     <b>Error ID:</b> <code>{error_id}</code>
 
   error_rate_limit: |
     ⏱️ <b>Too Many Requests</b>
-    
+
     You're sending commands too quickly.
     Please wait a moment and try again.
 
   error_duplicate_warning: |
     ⚠️ <b>Possible Duplicate Transaction</b>
-    
+
     A similar transaction was recorded recently:
-    
+
     <code>{amount}</code> - {description}
     <i>{timestamp}</i>
-    
+
     Do you want to record this transaction anyway?
 
 # ============================================================================
@@ -433,62 +433,62 @@ messages:
 
   notification_registration_request: |
     🔔 <b>New Registration Request</b>
-    
+
     <b>User:</b> @{username} ({display_name})
     <b>Telegram ID:</b> <code>{telegram_id}</code>
     <b>Employee ID:</b> <code>{employee_id}</code>
     <b>Requested:</b> {request_date}
-    
+
     <b>To approve:</b>
     <code>/approve {telegram_id}</code>
     <code>/approve {telegram_id} management</code> (for management role)
 
   notification_registration_approved: |
     🎉 <b>Registration Approved!</b>
-    
+
     Your registration has been approved.
     You can now use the Cash Flow Manager bot.
-    
+
     Send /start to begin tracking transactions.
 
   notification_critical_error: |
     🚨 <b>Critical System Error</b>
-    
+
     <b>Error Type:</b> {error_type}
     <b>Time:</b> {timestamp}
     <b>Details:</b> {error_message}
-    
+
     <b>Impact:</b> {impact_description}
-    
+
     Immediate attention required.
 
   notification_report_delivery_failed: |
     ⚠️ <b>Report Delivery Failed</b>
-    
+
     Failed to deliver daily report for <b>{date}</b>
-    
+
     <b>Retry Count:</b> {retry_count}/{max_retries}
     <b>Error:</b> {error_message}
-    
+
     {retry_status}
 
   notification_auth_failure_multiple: |
     ⚠️ <b>Multiple Authentication Failures</b>
-    
+
     <b>User:</b> {telegram_id} (@{username})
     <b>Failed Attempts:</b> {attempt_count}
     <b>Time Window:</b> {time_window}
-    
+
     Possible unauthorized access attempt.
 
   notification_system_downtime: |
     🚨 <b>System Downtime Alert</b>
-    
+
     Bot has been unreachable for <b>{downtime_minutes} minutes</b>
-    
+
     <b>Last Response:</b> {last_response_time}
     <b>Current Time:</b> {current_time}
-    
+
     System health check failing.
 
 # ============================================================================
@@ -497,27 +497,27 @@ messages:
 
   success_registration_submitted: |
     ✅ <b>Registration Submitted</b>
-    
+
     Employee ID: <code>{employee_id}</code>
-    
+
     An administrator will review your request.
     You'll receive a notification when approved.
 
   success_user_approved: |
     ✅ <b>User Approved</b>
-    
+
     User <code>{telegram_id}</code> has been approved as <b>{role}</b>
-    
+
     Notification sent to user.
 
   success_operation_cancelled: |
     ❌ <b>Operation Cancelled</b>
-    
+
     Send /start to return to main menu
 
   success_duplicate_recorded: |
     ✅ <b>Duplicate Transaction Recorded</b>
-    
+
     Transaction saved despite duplicate warning.
 
 # ============================================================================
@@ -531,28 +531,28 @@ keyboard_labels:
     - "📊 Daily Summary"
     - "📋 Transaction History"
     - "⚙️ Settings"
-  
+
   expense_categories:
     - "🏢 Operational"
     - "👔 Salaries"
     - "📦 Supplies"
     - "📢 Marketing"
     - "➕ Other"
-  
+
   pagination:
     - "◀️ Previous"
     - "Next ▶️"
-  
+
   confirmation:
     - "✅ Yes, Confirm"
     - "❌ No, Cancel"
-  
+
   date_filters:
     - "Today"
     - "This Week"
     - "This Month"
     - "All"
-  
+
   navigation:
     - "◀️ Back"
     - "🏠 Main Menu"
@@ -565,7 +565,7 @@ limits:
   max_message_length: 4096  # Telegram limit
   max_caption_length: 1024
   recommended_message_length: 300  # Mobile-friendly
-  
+
   truncation:
     suffix: "...\n\n<i>(Message truncated. Use /history for full details)</i>"
 

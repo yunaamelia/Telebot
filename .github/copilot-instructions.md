@@ -44,6 +44,7 @@ Before generating code, scan the codebase to identify:
 ### Language Versions
 
 **Python 3.11+**
+
 - Use async/await natively (required for python-telegram-bot 20.x)
 - Leverage type hints with `typing` module
 - Use match-case statements (available in Python 3.10+)
@@ -53,6 +54,7 @@ Before generating code, scan the codebase to identify:
 ### Framework Versions
 
 **Bot Framework: python-telegram-bot 20.7**
+
 - Native async/await support (all handlers are async)
 - Use `Application` builder pattern, not deprecated `Updater`
 - Conversation handlers with async callback functions
@@ -60,6 +62,7 @@ Before generating code, scan the codebase to identify:
 - File: Check import statements for version detection
 
 **Database: PostgreSQL 15+**
+
 - JSONB for flexible data (daily summaries, category breakdown)
 - Arrays for multi-value columns if needed
 - Window functions for analytics
@@ -67,6 +70,7 @@ Before generating code, scan the codebase to identify:
 - Full-text search capabilities
 
 **ORM: SQLAlchemy 2.0.25**
+
 - Async session management with `async_sessionmaker`
 - Declarative base with `DeclarativeBase`
 - Type-safe queries with modern ORM patterns
@@ -74,12 +78,14 @@ Before generating code, scan the codebase to identify:
 - Alembic 1.12 for migrations
 
 **Scheduler: APScheduler 3.10.4**
+
 - AsyncIOScheduler for async job execution
 - CronTrigger for WITA timezone-aware scheduling
 - Job persistence with database jobstore
 - Timezone handling with pytz 2023.3
 
 **Testing: pytest 7.4.3**
+
 - pytest-asyncio 0.21.1 for async test execution
 - pytest-cov 4.1.0 for coverage reporting (≥80% required)
 - pytest-mock for mocking Telegram API calls
@@ -89,15 +95,18 @@ Before generating code, scan the codebase to identify:
 ### Library Versions
 
 **Configuration & Validation**
+
 - Pydantic Settings 2.5 for environment variable parsing with type validation
 - python-dotenv for .env file loading
 
 **Logging & Observability**
+
 - structlog 23.2 for structured JSON logging
 - Correlation IDs for request tracing
 - Log levels: DEBUG (development), INFO (production)
 
 **Deployment**
+
 - Docker 24+ with multi-stage builds
 - docker-compose for local PostgreSQL
 - systemd for production service management
@@ -107,6 +116,7 @@ Before generating code, scan the codebase to identify:
 Prioritize the following files (if they exist):
 
 ### Specification Files (specs/001-cashflow-bot/)
+
 - **plan.md**: Implementation phases, technical context, project structure
 - **spec.md**: Functional requirements, user stories, acceptance criteria
 - **data-model.md**: Database schema, entity relationships, indexes
@@ -116,11 +126,13 @@ Prioritize the following files (if they exist):
 - **contracts/messages.yaml**: Message templates with HTML formatting
 
 ### Constitution (.specify/memory/constitution.md)
+
 - Engineering Excellence Constitution with 5 core principles
 - SOLID principles, TDD requirements, performance standards
 - Security guidelines, observability requirements
 
 ### Instructions (.github/instructions/)
+
 - **python.instructions.md**: Python 3.11 coding conventions, PEP 8
 - **security-and-owasp.instructions.md**: OWASP Top 10 security patterns
 - **langchain-python.instructions.md**: LangChain framework patterns
@@ -138,7 +150,7 @@ When context files don't provide specific guidance:
    - Logging approaches (structlog with correlation IDs)
    - Documentation style (docstrings with type hints, inline comments for non-obvious logic)
    - Testing patterns (pytest fixtures, async tests, arrange-act-assert)
-   
+
 3. Follow the most consistent patterns found in the codebase
 4. When conflicting patterns exist, prioritize patterns in newer files or files with higher test coverage
 5. Never introduce patterns not found in the existing codebase
@@ -146,6 +158,7 @@ When context files don't provide specific guidance:
 ## Code Quality Standards
 
 ### Maintainability
+
 - Write self-documenting code with clear naming (descriptive variable/function names)
 - Follow PEP 8 style guide (79-char line limit, 4-space indentation)
 - Follow established patterns for consistency (handlers → services → repositories)
@@ -155,6 +168,7 @@ When context files don't provide specific guidance:
 - Docstrings for all public functions (Google style)
 
 ### Performance
+
 - Async/await for all I/O operations (database, Telegram API, file I/O)
 - Connection pooling for PostgreSQL (SQLAlchemy async engine)
 - Batch operations for bulk inserts/updates (avoid N+1 queries)
@@ -163,6 +177,7 @@ When context files don't provide specific guidance:
 - Performance goals: <2s transaction confirmation (p95), <5s daily summary generation
 
 ### Security
+
 - Input validation for all user inputs (Pydantic models)
 - Parameterized SQL queries (SQLAlchemy ORM, never string concatenation)
 - Row Level Security (RLS) for multi-user access
@@ -172,12 +187,14 @@ When context files don't provide specific guidance:
 - OWASP Top 10 compliance (per security-and-owasp.instructions.md)
 
 ### Accessibility
+
 - Clear error messages for users (Telegram message formatting with HTML)
 - Keyboard navigation support (inline keyboards with callback data)
 - Timeout handling for long-running operations (async with timeout)
 - User feedback during processing (progress messages, "typing" action)
 
 ### Testability
+
 - Dependency injection for testable code (pass dependencies to constructors)
 - Repository pattern for data access (isolate database logic)
 - Service layer for business logic (pure functions where possible)
@@ -188,6 +205,7 @@ When context files don't provide specific guidance:
 ## Documentation Requirements
 
 ### Standard Documentation Level
+
 - Docstrings for all public functions/classes (Google style format)
 - Type hints for parameters and return values
 - Inline comments for non-obvious business logic
@@ -195,6 +213,7 @@ When context files don't provide specific guidance:
 - Module-level docstrings explaining purpose
 
 **Example**:
+
 ```python
 async def record_transaction(
     user_id: int,
@@ -205,25 +224,25 @@ async def record_transaction(
 ) -> Transaction:
     """
     Record a financial transaction for a user.
-    
+
     Validates amount, checks user authorization, and persists to database.
     Sends confirmation message to user via Telegram.
-    
+
     Args:
         user_id: Database ID of the user recording transaction
         amount: Transaction amount in Rupiah (must be positive)
         transaction_type: 'income' or 'expense'
         description: User-provided transaction description (max 200 chars)
         category_id: Foreign key to categories table
-    
+
     Returns:
         Transaction: Persisted transaction object with generated ID
-    
+
     Raises:
         ValueError: If amount is negative or zero
         UnauthorizedError: If user is not active
         ValidationError: If description exceeds 200 characters
-    
+
     Example:
         >>> tx = await record_transaction(
         ...     user_id=1,
@@ -241,6 +260,7 @@ async def record_transaction(
 ## Testing Approach
 
 ### Unit Testing
+
 - File naming: `test_<module>.py` (e.g., `test_transaction_service.py`)
 - Test class naming: `TestClassName` (e.g., `TestTransactionService`)
 - Test method naming: `test_<scenario>_<expected_result>` (e.g., `test_record_income_creates_transaction`)
@@ -250,6 +270,7 @@ async def record_transaction(
 - Parametrized tests for multiple scenarios (`@pytest.mark.parametrize`)
 
 **Example**:
+
 ```python
 import pytest
 from decimal import Decimal
@@ -262,7 +283,7 @@ class TestTransactionService:
         service = TransactionService(repository=mock_repository)
         user_id = 1
         amount = Decimal("100000")
-        
+
         # Act
         result = await service.record_income(
             user_id=user_id,
@@ -270,7 +291,7 @@ class TestTransactionService:
             description="Salary",
             category_id=1
         )
-        
+
         # Assert
         assert result.amount == amount
         assert result.type == "income"
@@ -278,6 +299,7 @@ class TestTransactionService:
 ```
 
 ### Integration Testing
+
 - Use Testcontainers for real PostgreSQL database
 - Test complete workflows (handler → service → repository → database)
 - Verify database state after operations
@@ -285,12 +307,14 @@ class TestTransactionService:
 - File naming: `test_integration_<module>.py`
 
 ### End-to-End Testing
+
 - Test complete user journeys (conversation flows)
 - Mock Telegram API responses
 - Verify message formatting and inline keyboards
 - Test error handling and retry logic
 
 ### Test-Driven Development
+
 - Write test first (Red phase)
 - Implement minimal code to pass (Green phase)
 - Refactor for quality (Refactor phase)
@@ -299,6 +323,7 @@ class TestTransactionService:
 ## Technology-Specific Guidelines
 
 ### Python Guidelines
+
 - Python 3.11+ features only
 - async/await for all I/O operations
 - Type hints with `typing` module (List, Dict, Optional, Union)
@@ -308,12 +333,14 @@ class TestTransactionService:
 - f-strings for string formatting (not % or .format())
 
 **Naming Conventions**:
+
 - Variables/functions: `snake_case` (e.g., `user_id`, `calculate_total`)
 - Classes: `PascalCase` (e.g., `TransactionService`, `UserRepository`)
 - Constants: `UPPER_SNAKE_CASE` (e.g., `MAX_DESCRIPTION_LENGTH`)
 - Private methods: `_leading_underscore` (e.g., `_validate_amount`)
 
 **Import Organization** (per PEP 8):
+
 ```python
 # Standard library
 import asyncio
@@ -332,6 +359,7 @@ from services.transaction_service import TransactionService
 ```
 
 **Error Handling**:
+
 ```python
 # Use specific exceptions
 try:
@@ -348,6 +376,7 @@ except Exception as e:
 ```
 
 ### PostgreSQL Guidelines
+
 - Use JSONB for flexible data (category breakdowns, report data)
 - Arrays for multi-value columns (tags, flags)
 - Window functions for analytics (ROW_NUMBER, SUM OVER)
@@ -356,6 +385,7 @@ except Exception as e:
 - Transactions for multi-step operations (async with session.begin())
 
 **SQLAlchemy 2.0 Patterns**:
+
 ```python
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -369,6 +399,7 @@ async def get_user_transactions(session: AsyncSession, user_id: int):
 ```
 
 ### Telegram Bot Guidelines
+
 - Async handlers with `async def` signature
 - Use `Application` builder pattern (not deprecated `Updater`)
 - Conversation handlers for multi-step flows (ConversationHandler)
@@ -378,6 +409,7 @@ async def get_user_transactions(session: AsyncSession, user_id: int):
 - Rate limiting awareness (respect Telegram API limits)
 
 **Handler Pattern**:
+
 ```python
 from telegram import Update
 from telegram.ext import ContextTypes, ConversationHandler
@@ -411,6 +443,7 @@ async def receive_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
 ## Version Control Guidelines
 
 ### Semantic Versioning
+
 - Follow Semantic Versioning (MAJOR.MINOR.PATCH)
 - MAJOR: Breaking changes (API changes, database schema migrations)
 - MINOR: New features (backward compatible)
@@ -418,12 +451,14 @@ async def receive_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
 - Tag releases with `git tag -a v1.0.0 -m "Release v1.0.0"`
 
 ### Commit Messages
+
 - Use conventional commits format: `<type>(<scope>): <subject>`
 - Types: feat, fix, docs, style, refactor, test, chore
 - Scope: module name (e.g., handlers, services, models)
 - Subject: imperative mood, lowercase, no period
 
 **Examples**:
+
 ```
 feat(handlers): add /balance command for account summary
 fix(services): correct timezone handling in daily summary
@@ -434,6 +469,7 @@ test(repositories): add integration tests for user repository
 ## General Best Practices
 
 ### Naming Conventions
+
 - Variables/functions: `snake_case` (Python convention)
 - Classes: `PascalCase` (Python convention)
 - Constants: `UPPER_SNAKE_CASE` (Python convention)
@@ -441,6 +477,7 @@ test(repositories): add integration tests for user repository
 - Database columns: `snake_case` (e.g., `user_id`, `created_at`)
 
 ### Code Organization
+
 ```
 src/
 ├── bot/
@@ -461,6 +498,7 @@ tests/
 ```
 
 ### Error Handling
+
 - Use specific exception types (ValueError, KeyError, UnauthorizedError)
 - Log errors with context (user_id, transaction_id, correlation_id)
 - Return user-friendly error messages (Telegram formatting)
@@ -468,6 +506,7 @@ tests/
 - Graceful degradation (fallback to default behavior)
 
 ### Logging
+
 - Use structlog for structured JSON logging
 - Include correlation IDs for request tracing
 - Log levels: DEBUG (development), INFO (production), WARNING (issues), ERROR (failures)
@@ -475,6 +514,7 @@ tests/
 - Log performance metrics (query time, handler execution time)
 
 **Example**:
+
 ```python
 import structlog
 
@@ -506,12 +546,14 @@ async def record_transaction(...):
 ```
 
 ### Configuration Management
+
 - Use Pydantic Settings for environment variable parsing
 - .env file for local development (never commit)
 - Environment-specific configs (development, staging, production)
 - Type validation for all config values
 
 **Example** (config/settings.py):
+
 ```python
 from pydantic_settings import BaseSettings
 
@@ -519,17 +561,17 @@ class Settings(BaseSettings):
     # Telegram
     telegram_bot_token: str
     telegram_admin_id: int
-    
+
     # Database
     database_url: str
     database_pool_size: int = 10
-    
+
     # Scheduler
     daily_summary_time: str = "00:00"  # WITA timezone
-    
+
     # Logging
     log_level: str = "INFO"
-    
+
     class Config:
         env_file = ".env"
         case_sensitive = False
@@ -540,6 +582,7 @@ settings = Settings()
 ## Project-Specific Guidance
 
 ### Financial Transaction Handling
+
 - Use `Decimal` type for all monetary values (never float)
 - Validate amounts are positive for income/expenses
 - Store amounts in smallest unit (Rupiah, no decimal places)
@@ -547,12 +590,14 @@ settings = Settings()
 - Transaction atomicity (database transactions for multi-step operations)
 
 ### WITA Timezone Handling
+
 - Use pytz for timezone conversion
 - Store all timestamps in UTC in database
 - Convert to WITA for display and daily summary generation
 - Handle timezone-aware datetime objects
 
 **Example**:
+
 ```python
 import pytz
 from datetime import datetime
@@ -569,6 +614,7 @@ def to_wita(dt: datetime) -> datetime:
 ```
 
 ### Daily Summary Generation
+
 - Scheduled at 00:00 WITA (APScheduler with CronTrigger)
 - Aggregate transactions from previous day (WITA date)
 - Store category breakdown as JSONB
@@ -576,6 +622,7 @@ def to_wita(dt: datetime) -> datetime:
 - Performance goal: <60s for 500 transactions
 
 ### Data Retention
+
 - 3-year retention policy for transactions
 - Archive old data to separate table (transactions_archive)
 - Monthly cleanup job (last day of month)
@@ -584,6 +631,7 @@ def to_wita(dt: datetime) -> datetime:
 ## Architecture Guidelines
 
 ### Layered Architecture
+
 ```
 Telegram Bot (Presentation Layer)
     ↓
@@ -599,6 +647,7 @@ PostgreSQL Database
 ```
 
 ### Dependency Flow
+
 - Handlers depend on Services
 - Services depend on Repositories
 - Repositories depend on Models
@@ -606,6 +655,7 @@ PostgreSQL Database
 - Inject dependencies via constructor (dependency injection)
 
 ### Boundaries
+
 - No database queries in handlers (use services)
 - No business logic in repositories (pure data access)
 - No Telegram API calls in services (return data, handlers send messages)
@@ -627,6 +677,7 @@ PostgreSQL Database
 ## Success Criteria
 
 Code generated by Copilot should:
+
 - ✅ Be compatible with Python 3.11 and all specified library versions
 - ✅ Follow the layered architecture (handlers → services → repositories → models)
 - ✅ Include proper error handling and logging
