@@ -2,9 +2,6 @@
 
 Represents transaction categories (Income, Operational, Salaries, etc.).
 """
-from datetime import datetime
-from typing import Optional
-
 from sqlalchemy import Boolean
 from sqlalchemy import CheckConstraint
 from sqlalchemy import Column
@@ -42,7 +39,7 @@ class Category(Base):
     __table_args__ = (CheckConstraint("type IN ('income', 'expense')", name="chk_category_type"),)
 
     def display_name(self) -> str:
-        """Get formatted display name with emoji.
+        """Return formatted display name with emoji.
 
         Returns:
             Category name with emoji prefix (e.g., "💰 Income")
@@ -52,7 +49,7 @@ class Category(Base):
         return self.name
 
     def __repr__(self) -> str:
-        """String representation of Category."""
+        """Return string representation of Category."""
         return (
             f"<Category(category_id={self.category_id}, "
             f"name='{self.name}', "

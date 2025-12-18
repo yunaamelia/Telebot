@@ -1,4 +1,4 @@
-"""Create daily_summaries table with JSONB support
+"""Create daily_summaries table with JSONB support.
 
 Revision ID: 004_create_daily_summaries
 Revises: 003_create_transactions
@@ -23,16 +23,37 @@ def upgrade() -> None:
         'daily_summaries',
         sa.Column('summary_id', sa.Integer(), nullable=False),
         sa.Column('summary_date', sa.Date(), nullable=False),
-        sa.Column('total_income', sa.Numeric(precision=15, scale=2), nullable=False, server_default='0'),
-        sa.Column('total_expenses', sa.Numeric(precision=15, scale=2), nullable=False, server_default='0'),
+        sa.Column(
+            'total_income',
+            sa.Numeric(precision=15, scale=2),
+            nullable=False,
+            server_default='0',
+        ),
+        sa.Column(
+            'total_expenses',
+            sa.Numeric(precision=15, scale=2),
+            nullable=False,
+            server_default='0',
+        ),
         sa.Column('transaction_count', sa.Integer(), nullable=False, server_default='0'),
         sa.Column('income_count', sa.Integer(), nullable=False, server_default='0'),
         sa.Column('expense_count', sa.Integer(), nullable=False, server_default='0'),
-        sa.Column('category_breakdown', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-        sa.Column('generated_at', sa.DateTime(timezone=True), server_default=sa.text('NOW()'), nullable=True),
+        sa.Column(
+            'category_breakdown',
+            postgresql.JSONB(astext_type=sa.Text()),
+            nullable=True,
+        ),
+        sa.Column(
+            'generated_at',
+            sa.DateTime(timezone=True),
+            server_default=sa.text('NOW()'),
+            nullable=True,
+        ),
         sa.Column('report_delivered_at', sa.DateTime(timezone=True), nullable=True),
-        sa.CheckConstraint('total_income >= 0 AND total_expenses >= 0',
-                          name='chk_amounts_non_negative'),
+        sa.CheckConstraint(
+            'total_income >= 0 AND total_expenses >= 0',
+            name='chk_amounts_non_negative',
+        ),
         sa.PrimaryKeyConstraint('summary_id'),
         sa.UniqueConstraint('summary_date')
     )

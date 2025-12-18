@@ -1,12 +1,12 @@
-"""Create categories table with seed data
+"""Create categories table with seed data.
 
 Revision ID: 002_create_categories
 Revises: 001_create_users
 Create Date: 2025-12-18
 
 """
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = '002_create_categories'
@@ -26,7 +26,12 @@ def upgrade() -> None:
         sa.Column('emoji', sa.String(length=10), nullable=True),
         sa.Column('sort_order', sa.Integer(), nullable=False),
         sa.Column('is_active', sa.Boolean(), nullable=True, server_default='true'),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('NOW()'), nullable=True),
+        sa.Column(
+            'created_at',
+            sa.DateTime(timezone=True),
+            server_default=sa.text('NOW()'),
+            nullable=True,
+        ),
         sa.CheckConstraint("type IN ('income', 'expense')", name='chk_category_type'),
         sa.PrimaryKeyConstraint('category_id'),
         sa.UniqueConstraint('name')

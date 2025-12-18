@@ -2,9 +2,6 @@
 
 Represents authorized bot users with registration approval workflow.
 """
-from datetime import datetime
-from typing import Optional
-
 from sqlalchemy import BigInteger
 from sqlalchemy import CheckConstraint
 from sqlalchemy import Column
@@ -85,7 +82,7 @@ class User(Base):
         return self.role in ("management", "admin")
 
     def __repr__(self) -> str:
-        """String representation of User."""
+        """Return string representation of User."""
         return (
             f"<User(user_id={self.user_id}, "
             f"telegram_id={self.telegram_id}, "

@@ -6,9 +6,7 @@ from datetime import date
 from datetime import datetime
 from datetime import timedelta
 from decimal import Decimal
-from typing import List
 from typing import Optional
-from typing import Tuple
 
 from sqlalchemy import and_
 from sqlalchemy import desc

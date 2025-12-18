@@ -2,9 +2,6 @@
 
 Provides CRUD operations for Category model with in-memory caching.
 """
-from functools import lru_cache
-from typing import Dict
-from typing import List
 from typing import Optional
 
 from sqlalchemy import select
@@ -38,7 +35,7 @@ class CategoryRepository:
             return
 
         result = await self.session.execute(
-            select(Category).where(Category.is_active == True).order_by(Category.sort_order)
+            select(Category).where(Category.is_active.is_(True)).order_by(Category.sort_order)
         )
         categories = list(result.scalars().all())
 

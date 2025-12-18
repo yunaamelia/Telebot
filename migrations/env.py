@@ -1,19 +1,20 @@
-"""Alembic environment configuration for Cash Flow Bot"""
-from logging.config import fileConfig
-
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-
-from alembic import context
-
+"""Alembic environment configuration for Cash Flow Bot."""
 import os
 import sys
+from logging.config import fileConfig
+
+from alembic import context
+from sqlalchemy import engine_from_config
+from sqlalchemy import pool
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 # Import all models to ensure they're registered with SQLAlchemy
-from src.bot.models import User, Category, Transaction, DailySummary
+from src.bot.models import Category  # noqa: E402, F401
+from src.bot.models import DailySummary  # noqa: E402, F401
+from src.bot.models import Transaction  # noqa: E402, F401
+from src.bot.models import User  # noqa: E402, F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -30,7 +31,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Import Base metadata from database session
-from src.database.session import Base
+from src.database.session import Base  # noqa: E402
 
 # Use the single Base metadata
 target_metadata = Base.metadata

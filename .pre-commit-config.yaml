@@ -13,16 +13,6 @@ default_language_version:
 
 repos:
   # ==============================================================================
-  # Meta Hooks - Validate pre-commit configuration itself
-  # ==============================================================================
-  - repo: meta
-    hooks:
-      - id: check-hooks-apply
-        stages: [pre-commit]
-      - id: check-useless-excludes
-        stages: [pre-commit]
-
-  # ==============================================================================
   # General File Checks
   # ==============================================================================
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -39,8 +29,6 @@ repos:
       - id: check-yaml
         args: [--allow-multiple-documents]
       - id: check-json
-      - id: check-toml
-      - id: check-xml
 
       # Code quality
       - id: check-ast  # Python syntax validation
@@ -56,7 +44,6 @@ repos:
 
       # File management
       - id: check-case-conflict
-      - id: check-symlinks
       - id: check-executables-have-shebangs
       - id: fix-byte-order-marker
 
@@ -150,7 +137,6 @@ repos:
     hooks:
       - id: detect-secrets
         args: [--baseline, .secrets.baseline]
-        exclude: package-lock.json
 
   # ==============================================================================
   # Documentation

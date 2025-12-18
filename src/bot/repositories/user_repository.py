@@ -2,7 +2,6 @@
 
 Provides CRUD operations for User model with authorization helpers.
 """
-from typing import List
 from typing import Optional
 
 from sqlalchemy import select

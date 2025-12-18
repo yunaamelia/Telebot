@@ -8,10 +8,8 @@ import uuid
 from contextvars import ContextVar
 from datetime import datetime
 from typing import Any
-from typing import Dict
 from typing import Optional
 
-import structlog
 from pythonjsonlogger import jsonlogger
 
 from src.config.settings import get_settings

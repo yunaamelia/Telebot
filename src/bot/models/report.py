@@ -2,11 +2,7 @@
 
 Represents pre-computed daily financial summaries for fast report generation.
 """
-from datetime import date
-from datetime import datetime
 from decimal import Decimal
-from typing import Dict
-from typing import Optional
 
 from sqlalchemy import CheckConstraint
 from sqlalchemy import Column
@@ -129,7 +125,7 @@ class DailySummary(Base):
         return Decimal(self.category_breakdown.get(category_name, 0))
 
     def __repr__(self) -> str:
-        """String representation of DailySummary."""
+        """Return string representation of DailySummary."""
         return (
             f"<DailySummary(summary_id={self.summary_id}, "
             f"date={self.summary_date}, "

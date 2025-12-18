@@ -2,11 +2,6 @@
 
 Represents financial transactions (income and expenses) with comprehensive validation.
 """
-from datetime import date
-from datetime import datetime
-from decimal import Decimal
-from typing import Optional
-
 from sqlalchemy import Boolean
 from sqlalchemy import CheckConstraint
 from sqlalchemy import Column
@@ -101,7 +96,7 @@ class Transaction(Base):
         return self.type == "expense"
 
     def __repr__(self) -> str:
-        """String representation of Transaction."""
+        """Return string representation of Transaction."""
         return (
             f"<Transaction(transaction_id='{self.transaction_id}', "
             f"type='{self.type}', "

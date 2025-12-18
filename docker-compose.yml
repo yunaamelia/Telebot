@@ -7,7 +7,7 @@ services:
     environment:
       POSTGRES_DB: cashflow_db
       POSTGRES_USER: cashflow_user
-      POSTGRES_PASSWORD: cashflow_password
+      POSTGRES_PASSWORD: cashflow_password  # pragma: allowlist secret
       POSTGRES_INITDB_ARGS: "-E UTF8 --locale=en_US.UTF-8"
       TZ: Asia/Makassar
     ports:
@@ -31,7 +31,7 @@ services:
     environment:
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
       MANAGEMENT_CHAT_ID: ${MANAGEMENT_CHAT_ID}
-      DATABASE_URL: postgresql://cashflow_user:cashflow_password@postgres:5432/cashflow_db
+      DATABASE_URL: postgresql://cashflow_user:cashflow_password@postgres:5432/cashflow_db  # pragma: allowlist secret
       TIMEZONE: Asia/Makassar
       ENVIRONMENT: development
       LOG_LEVEL: INFO

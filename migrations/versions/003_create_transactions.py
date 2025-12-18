@@ -1,13 +1,12 @@
-"""Create transactions table with all indexes
+"""Create transactions table.
 
 Revision ID: 003_create_transactions
 Revises: 002_create_categories
 Create Date: 2025-12-18
 
 """
-from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = '003_create_transactions'
@@ -27,11 +26,21 @@ def upgrade() -> None:
         sa.Column('amount', sa.Numeric(precision=15, scale=2), nullable=False),
         sa.Column('type', sa.String(length=20), nullable=False),
         sa.Column('description', sa.Text(), nullable=True),
-        sa.Column('timestamp', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('NOW()')),
+        sa.Column(
+            'timestamp',
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text('NOW()'),
+        ),
         sa.Column('transaction_date', sa.Date(), nullable=False),
         sa.Column('status', sa.String(length=20), nullable=False, server_default='recorded'),
         sa.Column('is_duplicate_confirmed', sa.Boolean(), nullable=True, server_default='false'),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('NOW()'), nullable=True),
+        sa.Column(
+            'created_at',
+            sa.DateTime(timezone=True),
+            server_default=sa.text('NOW()'),
+            nullable=True,
+        ),
         sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
         sa.CheckConstraint('amount > 0', name='chk_amount_positive'),
         sa.CheckConstraint('amount <= 10000000000', name='chk_amount_max'),
@@ -43,20 +52,33 @@ def upgrade() -> None:
     )
 
     # Create performance indexes for common queries
-    op.create_index('idx_transactions_date', 'transactions', ['transaction_date'],
-                    postgresql_ops={'transaction_date': 'DESC'})
+    op.create_index(
+        'idx_transactions_date',
+        'transactions',
+        ['transaction_date'],
+        postgresql_ops={'transaction_date': 'DESC'},
+    )
     op.create_index('idx_transactions_user', 'transactions', ['user_id'])
     op.create_index('idx_transactions_category', 'transactions', ['category_id'])
     op.create_index('idx_transactions_timestamp', 'transactions', ['timestamp'])
 
     # Partial index for active (non-archived) data - speeds up recent queries
-    op.create_index('idx_transactions_active', 'transactions', ['transaction_date'],
-                    postgresql_where=sa.text("status = 'recorded' AND transaction_date > CURRENT_DATE - INTERVAL '1 year'"))
+    op.create_index(
+        'idx_transactions_active',
+        'transactions',
+        ['transaction_date'],
+        postgresql_where=sa.text(
+            "status = 'recorded' AND transaction_date > CURRENT_DATE - INTERVAL '1 year'"
+        ),
+    )
 
     # Composite index for daily summary generation
-    op.create_index('idx_transactions_daily_summary', 'transactions',
-                    ['transaction_date', 'type', 'category_id'],
-                    postgresql_where=sa.text("status = 'recorded'"))
+    op.create_index(
+        'idx_transactions_daily_summary',
+        'transactions',
+        ['transaction_date', 'type', 'category_id'],
+        postgresql_where=sa.text("status = 'recorded'"),
+    )
 
     # Full-text search index for transaction descriptions
     op.execute("""

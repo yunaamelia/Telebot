@@ -2,7 +2,6 @@
 
 Settings are loaded from environment variables with validation and type checking.
 """
-import os
 from functools import lru_cache
 from typing import Literal
 
@@ -16,8 +15,9 @@ class Settings(BaseSettings):
     """Application settings with environment variable loading.
 
     All settings can be overridden via environment variables.
+
     Example:
-        DATABASE_URL=postgresql://user:pass@localhost/db
+        DATABASE_URL=postgresql://user:pass@localhost/db  # pragma: allowlist secret
         TELEGRAM_BOT_TOKEN=123456:ABC-DEF...
     """
 
