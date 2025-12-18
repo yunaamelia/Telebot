@@ -1,6 +1,7 @@
 # Telegram Cash Flow Management Bot
 
-Real-time cash flow tracking bot for company financial management. Record transactions, generate automated daily reports, and maintain complete audit trails through Telegram.
+Real-time cash flow tracking bot for company financial management. Record transactions, generate automated daily
+reports, and maintain complete audit trails through Telegram.
 
 ## Features
 
@@ -88,7 +89,8 @@ docker-compose down
 
 ### Git Hooks & Quality Checks
 
-This project uses pre-commit hooks for automatic code quality checks. See [docs/HOOKS_QUICKSTART.md](docs/HOOKS_QUICKSTART.md) for complete guide.
+This project uses pre-commit hooks for automatic code quality checks. See
+[docs/HOOKS_QUICKSTART.md](docs/HOOKS_QUICKSTART.md) for complete guide.
 
 ```bash
 # Install hooks (one-time setup)
