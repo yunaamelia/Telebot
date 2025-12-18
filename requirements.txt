@@ -1,0 +1,28 @@
+# Telegram Cash Flow Management Bot - Production Dependencies
+# Python 3.11+ required
+
+alembic==1.13.1
+
+# Scheduling
+APScheduler==3.10.4
+asyncpg==0.29.0
+
+# Configuration Management
+pydantic==2.5.3
+pydantic-settings==2.1.0
+
+# Utilities
+python-dateutil==2.8.2
+python-dotenv==1.0.0
+
+# Logging
+python-json-logger==2.0.7
+# Telegram Bot Framework
+python-telegram-bot==20.7
+
+# Timezone Handling
+pytz==2023.3
+
+# Database ORM and Migrations
+SQLAlchemy==2.0.25
+structlog==24.1.0

@@ -1,0 +1,27 @@
+# Bandit security linting configuration
+# https://bandit.readthedocs.io/en/latest/config.html
+
+# List of test IDs to skip
+skips:
+  # B101: assert_used - we use asserts in tests
+  - B101
+
+# Specific tests to run (leave empty to run all)
+tests: []
+
+# Exclude paths
+exclude_dirs:
+  - /tests/
+  - /venv/
+  - /.git/
+  - __pycache__
+  - migrations/
+
+# Severity levels: LOW, MEDIUM, HIGH
+# Confidence levels: LOW, MEDIUM, HIGH
+
+# Only show issues with HIGH confidence
+confidence: MEDIUM
+
+# Minimum severity to report
+severity: MEDIUM
