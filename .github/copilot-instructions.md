@@ -39,8 +39,9 @@ If hooks fail:
 - ✅ **DO**: Re-run commit after fixes
 - ❌ **NEVER**: Use `--no-verify`, `--no-hooks`, or `-n` flags to bypass validation
 - ❌ **NEVER**: Push code with failing tests or linting errors
+- ❌ **NEVER**: Skip pytest coverage checks with `SKIP=pytest-coverage` or similar environment variables
 
-**Rationale**: Pre-commit hooks enforce code quality, security scanning (bandit, detect-secrets), formatting (black, isort), linting (flake8, pylint), and conventional commits. Bypassing them introduces technical debt and potential security vulnerabilities.
+**Rationale**: Pre-commit hooks enforce code quality, security scanning (bandit, detect-secrets), formatting (black, isort), linting (flake8, pylint), and conventional commits. Bypassing them introduces technical debt and potential security vulnerabilities. Pytest coverage ensures minimum 80% test coverage is maintained.
 
 **Reference**: See `.github/instructions/jarvis-persona.instructions.md` for complete JARVIS persona specification.
 
