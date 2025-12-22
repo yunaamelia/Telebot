@@ -28,6 +28,9 @@ class TransactionService:
     # Maximum description length (characters)
     MAX_DESCRIPTION_LENGTH = 500
 
+    # Duplicate detection window (seconds)
+    DUPLICATE_WINDOW_SECONDS = 60
+
     def __init__(self, repository: TransactionRepository):
         """Initialize transaction service.
 
@@ -183,12 +186,84 @@ class TransactionService:
             )
             raise
 
+    async def check_duplicate_income(
+        self, user: User, amount: Decimal, description: Optional[str] = None
+    ) -> list[Transaction]:
+        """Check for duplicate income transactions within 60-second window.
+
+        Per FR-023: Duplicate detection to prevent accidental double-entry.
+
+        Args:
+            user: User to check duplicates for
+            amount: Transaction amount to check
+            description: Optional description to check
+
+        Returns:
+            List of potential duplicate transactions (empty if none found)
+
+        Example:
+            >>> duplicates = await service.check_duplicate_income(
+            ...     user=user,
+            ...     amount=Decimal("500000"),
+            ...     description="Client payment"
+            ... )
+            >>> if duplicates:
+            ...     # Show warning to user
+        """
+        return await self.repository.find_duplicates(
+            user_id=user.user_id,
+            transaction_type="income",
+            amount=amount,
+            description=description,
+            window_seconds=self.DUPLICATE_WINDOW_SECONDS,
+        )
+
+    async def check_duplicate_expense(
+        self,
+        user: User,
+        amount: Decimal,
+        category_id: int,
+        description: Optional[str] = None,
+    ) -> list[Transaction]:
+        """Check for duplicate expense transactions within 60-second window.
+
+        Per FR-023: Duplicate detection to prevent accidental double-entry.
+
+        Args:
+            user: User to check duplicates for
+            amount: Transaction amount to check
+            category_id: Expense category ID
+            description: Optional description to check
+
+        Returns:
+            List of potential duplicate transactions (empty if none found)
+
+        Example:
+            >>> duplicates = await service.check_duplicate_expense(
+            ...     user=user,
+            ...     amount=Decimal("250000"),
+            ...     category_id=4,
+            ...     description="Office supplies"
+            ... )
+            >>> if duplicates:
+            ...     # Show warning to user
+        """
+        return await self.repository.find_duplicates(
+            user_id=user.user_id,
+            transaction_type="expense",
+            amount=amount,
+            category_id=category_id,
+            description=description,
+            window_seconds=self.DUPLICATE_WINDOW_SECONDS,
+        )
+
     async def record_expense(
         self,
         user: User,
         amount: Decimal,
         category_id: int,
         description: Optional[str] = None,
+        is_duplicate_confirmed: bool = False,
     ) -> Transaction:
         """Record expense transaction for user.
 
@@ -199,6 +274,7 @@ class TransactionService:
             amount: Transaction amount in Rupiah (must be positive)
             category_id: Expense category ID (2-6)
             description: Optional transaction description (max 500 chars)
+            is_duplicate_confirmed: Whether duplicate warning was confirmed
 
         Returns:
             Transaction: Persisted transaction object with generated ID
@@ -279,6 +355,7 @@ class TransactionService:
             timestamp=current_time,
             transaction_date=transaction_date,
             status="completed",
+            is_duplicate_confirmed=is_duplicate_confirmed,
         )
 
         # Persist to database

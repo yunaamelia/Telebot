@@ -244,6 +244,81 @@ class TransactionRepository:
 
         return transactions, total_count
 
+    async def find_duplicates(
+        self,
+        user_id: int,
+        transaction_type: str,
+        amount: Decimal,
+        description: Optional[str] = None,
+        category_id: Optional[int] = None,
+        window_seconds: int = 60,
+    ) -> list[Transaction]:
+        """Find potential duplicate transactions within time window.
+
+        Per FR-023: Duplicate detection for accidental double-entry prevention.
+
+        Args:
+            user_id: User ID to check duplicates for
+            transaction_type: 'income' or 'expense'
+            amount: Transaction amount
+            description: Optional description to match
+            category_id: Optional category ID to match (for expenses)
+            window_seconds: Time window to check (default 60 seconds)
+
+        Returns:
+            List of potential duplicate transactions
+
+        Example:
+            >>> duplicates = await repo.find_duplicates(
+            ...     user_id=1,
+            ...     transaction_type="income",
+            ...     amount=Decimal("500000"),
+            ...     description="Client payment",
+            ...     window_seconds=60
+            ... )
+        """
+        # Calculate time window
+        cutoff_time = datetime.utcnow() - timedelta(seconds=window_seconds)
+
+        # Build query conditions
+        conditions = [
+            Transaction.user_id == user_id,
+            Transaction.type == transaction_type,
+            Transaction.amount == amount,
+            Transaction.timestamp >= cutoff_time,
+            Transaction.status == "recorded",
+        ]
+
+        # Add optional conditions
+        if description:
+            conditions.append(Transaction.description == description)
+
+        if category_id is not None:
+            conditions.append(Transaction.category_id == category_id)
+
+        # Execute query
+        result = await self.session.execute(
+            select(Transaction)
+            .where(and_(*conditions))
+            .order_by(desc(Transaction.timestamp))
+            .limit(5)  # Limit to prevent excessive results
+        )
+
+        duplicates = list(result.scalars().all())
+
+        if duplicates:
+            logger.info(
+                "Potential duplicates found",
+                extra={
+                    "user_id": user_id,
+                    "transaction_type": transaction_type,
+                    "count": len(duplicates),
+                    "window_seconds": window_seconds,
+                },
+            )
+
+        return duplicates
+
     async def archive_old_transactions(
         self,
         cutoff_date: date,
