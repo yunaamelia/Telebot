@@ -11,7 +11,7 @@ from telegram.constants import ParseMode
 from src.bot.models.category import Category
 from src.bot.models.transaction import Transaction
 from src.bot.utils.formatters import format_currency
-from src.bot.utils.timezone import format_datetime_wita
+from src.bot.utils.timezone import format_wita_datetime
 
 
 logger = structlog.get_logger(__name__)
@@ -94,7 +94,7 @@ class NotificationService:
             Formatted message string with HTML markup
         """
         amount = format_currency(transaction.amount)
-        timestamp = format_datetime_wita(transaction.timestamp)
+        timestamp = format_wita_datetime(transaction.timestamp)
 
         return (
             f"💰 <b>Income Recorded</b>\n\n"
@@ -119,7 +119,7 @@ class NotificationService:
             Formatted message string with HTML markup
         """
         amount = format_currency(transaction.amount)
-        timestamp = format_datetime_wita(transaction.timestamp)
+        timestamp = format_wita_datetime(transaction.timestamp)
 
         # Get category info
         if category:

@@ -38,7 +38,8 @@ class Settings(BaseSettings):
         ..., description="Telegram Bot API token from @BotFather"  # Required field
     )
     management_chat_id: int = Field(
-        ..., description="Telegram chat ID for management reports and alerts"  # Required field
+        ...,
+        description="Telegram chat ID for management reports and alerts",  # Required field
     )
 
     # Timezone Configuration
@@ -49,12 +50,14 @@ class Settings(BaseSettings):
         default="INFO", description="Logging level"
     )
     log_format: Literal["json", "text"] = Field(
-        default="json", description="Log output format (json for production, text for development)"
+        default="json",
+        description="Log output format (json for production, text for development)",
     )
 
     # Rate Limiting & Performance
     max_amount: float = Field(
-        default=10_000_000_000.00, description="Maximum transaction amount (10 billion per FR-022)"
+        default=10_000_000_000.00,
+        description="Maximum transaction amount (10 billion per FR-022)",
     )
     duplicate_detection_window_seconds: int = Field(
         default=60, description="Time window for duplicate transaction detection"
@@ -62,7 +65,8 @@ class Settings(BaseSettings):
 
     # Scheduler Configuration
     daily_report_hour: int = Field(
-        default=0, description="Hour to send daily report (24-hour format, 0 = midnight)"
+        default=0,
+        description="Hour to send daily report (24-hour format, 0 = midnight)",
     )
     daily_report_minute: int = Field(default=0, description="Minute to send daily report")
     report_retry_interval_minutes: int = Field(
@@ -132,3 +136,7 @@ def get_settings() -> Settings:
         Cache can be cleared with get_settings.cache_clear() for testing.
     """
     return Settings()
+
+
+# Global settings instance for convenient access
+settings = get_settings()

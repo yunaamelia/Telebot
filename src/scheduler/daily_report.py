@@ -82,26 +82,28 @@ async def execute_daily_report_job(management_chat_id: int) -> None:
 
         # Initialize services
         bot = Bot(token=settings.telegram_bot_token)
-        report_service = ReportService()
-        notification_service = NotificationService(bot)
 
-        # Generate report data
-        report_data = await report_service.generate_daily_report(report_date)
-
-        # Format report message
-        report_text = _format_daily_report_message(report_data)
-
-        # Send with retry logic
-        await notification_service.send_daily_report_with_retry(
-            chat_id=management_chat_id, report_text=report_text
+        # Initialize repository and service
+        from src.bot.repositories.transaction_repository import (
+            TransactionRepository,
         )
+        from src.database.session import get_db_session
 
-        logger.info(
-            "Daily report delivered successfully",
-            report_date=str(report_date),
-            chat_id=management_chat_id,
-        )
+        async with get_db_session() as session:
+            transaction_repo = TransactionRepository(session)
+            report_service = ReportService(transaction_repo)
+            notification_service = NotificationService(bot)
 
+            # Generate report data
+            report_data = await report_service.generate_daily_report(report_date)
+
+            # Format report message
+            report_text = _format_daily_report_message(report_data)
+
+            # Send with retry logic
+            await notification_service.send_daily_report_with_retry(
+                chat_id=management_chat_id, report_text=report_text
+            )
     except Exception as e:
         logger.exception(
             "Daily report job failed",

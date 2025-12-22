@@ -156,7 +156,6 @@ class ReportService:
         """
         from src.bot.repositories.category_repository import CategoryRepository
         from src.bot.utils.formatters import format_currency
-        from src.database.session import get_async_session
 
         logger.info("Generating daily report", report_date=report_date.isoformat())
 
@@ -185,13 +184,13 @@ class ReportService:
             category_breakdown = "ℹ️ No expenses today"
         else:
             # Get category details for formatting
-            async with get_async_session() as session:
-                category_repo = CategoryRepository(session)
-                categories = {}
-                for category_id in summary.category_breakdown.keys():
-                    category = await category_repo.get_by_id(category_id)
-                    if category:
-                        categories[category_id] = category
+            # Reuse existing session
+            category_repo = CategoryRepository(self.repository.session)
+            categories = {}
+            for category_id in summary.category_breakdown.keys():
+                category = await category_repo.get_by_id(category_id)
+                if category:
+                    categories[category_id] = category
 
             # Build category breakdown lines
             breakdown_lines = []

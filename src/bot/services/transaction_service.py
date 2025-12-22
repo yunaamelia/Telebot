@@ -113,7 +113,7 @@ class TransactionService:
             description = "No description"
 
         # Verify user is authorized (active status)
-        if user.status != "active":
+        if not user.is_authorized():
             logger.error(
                 "Unauthorized transaction attempt",
                 user_id=user.user_id,
@@ -320,7 +320,7 @@ class TransactionService:
             description = "Uncategorized expense"
 
         # Verify user is authorized
-        if user.status != "active":
+        if not user.is_authorized():
             logger.error(
                 "Unauthorized transaction attempt",
                 user_id=user.user_id,
@@ -360,7 +360,17 @@ class TransactionService:
 
         # Persist to database
         try:
-            persisted_transaction = await self.repository.create(transaction)
+            persisted_transaction = await self.repository.create(
+                transaction_id=transaction_id,
+                user_id=user.user_id,
+                category_id=category_id,
+                amount=amount,
+                transaction_type="expense",
+                description=description,
+                timestamp=current_time,
+                transaction_date=transaction_date,
+                is_duplicate_confirmed=is_duplicate_confirmed,
+            )
 
             logger.info(
                 "Expense transaction recorded successfully",
