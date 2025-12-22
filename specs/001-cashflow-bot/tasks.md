@@ -203,8 +203,8 @@
 
 - [X] T078 [P] [US4] Unit test for scheduler configuration in tests/unit/scheduler/test_daily_report.py with timezone validation
 - [X] T079 [P] [US4] Unit test for report delivery with retry logic in tests/unit/services/test_notification_retry.py
-- [ ] T080 [US4] Integration test for 24:00 WITA trigger in tests/integration/test_scheduler.py with time mocking
-- [ ] T081 [US4] E2E test for full report workflow in tests/e2e/test_daily_report.py
+- [X] T080 [US4] Integration test for 24:00 WITA trigger in tests/integration/test_scheduler.py with time mocking
+- [X] T081 [US4] E2E test for full report workflow in tests/e2e/test_daily_report.py
 
 ### Implementation Tasks for User Story 4
 
