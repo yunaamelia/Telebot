@@ -71,7 +71,7 @@ class ReportService:
         )
 
         # Get all transactions for the date
-        transactions = await self.repository.find_by_date_range(
+        transactions = await self.repository.get_by_date_range(
             start_date=summary_date,
             end_date=summary_date,
         )
