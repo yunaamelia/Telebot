@@ -3,7 +3,6 @@
 Following TDD: These tests are written FIRST and should FAIL until implementation.
 Tests complete user workflow from command input → category selection → confirmation.
 """
-
 from datetime import datetime
 from decimal import Decimal
 from unittest.mock import AsyncMock
@@ -19,12 +18,12 @@ from telegram import Update
 from telegram import User as TelegramUser
 from telegram.ext import ContextTypes
 
-from bot.handlers.transaction import expense_category_callback_handler
-from bot.handlers.transaction import expense_command_handler
-from bot.models.category import Category
-from bot.models.transaction import Transaction
-from bot.models.user import User
-from bot.services.transaction_service import TransactionService
+from src.bot.handlers.transaction import expense_category_callback_handler
+from src.bot.handlers.transaction import expense_command_handler
+from src.bot.models.category import Category
+from src.bot.models.transaction import Transaction
+from src.bot.models.user import User
+from src.bot.services.transaction_service import TransactionService
 
 
 @pytest.fixture
@@ -115,18 +114,10 @@ def sample_transaction():
 def expense_categories():
     """Create sample expense categories."""
     return [
-        Category(
-            category_id=2, name="Operational", type="expense", emoji="🏢", sort_order=2
-        ),
-        Category(
-            category_id=3, name="Salaries", type="expense", emoji="👔", sort_order=3
-        ),
-        Category(
-            category_id=4, name="Supplies", type="expense", emoji="📦", sort_order=4
-        ),
-        Category(
-            category_id=5, name="Marketing", type="expense", emoji="📢", sort_order=5
-        ),
+        Category(category_id=2, name="Operational", type="expense", emoji="🏢", sort_order=2),
+        Category(category_id=3, name="Salaries", type="expense", emoji="👔", sort_order=3),
+        Category(category_id=4, name="Supplies", type="expense", emoji="📦", sort_order=4),
+        Category(category_id=5, name="Marketing", type="expense", emoji="📢", sort_order=5),
         Category(category_id=6, name="Other", type="expense", emoji="➕", sort_order=6),
     ]
 
@@ -142,9 +133,7 @@ class TestExpenseCommandE2E:
         # Arrange
         mock_telegram_update.message.text = "/expense 250000 Office supplies"
 
-        with patch(
-            "bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user
-        ):
+        with patch("bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user):
             with patch(
                 "bot.handlers.transaction.get_expense_categories",
                 return_value=expense_categories,
@@ -182,12 +171,8 @@ class TestExpenseCommandE2E:
         }
         mock_transaction_service.record_expense.return_value = sample_transaction
 
-        with patch(
-            "bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user
-        ):
-            with patch(
-                "bot.handlers.transaction.transaction_service", mock_transaction_service
-            ):
+        with patch("bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user):
+            with patch("bot.handlers.transaction.transaction_service", mock_transaction_service):
                 with patch(
                     "bot.handlers.transaction.get_category_by_id",
                     return_value=Category(
@@ -228,12 +213,8 @@ class TestExpenseCommandE2E:
         }
         mock_transaction_service.record_expense.return_value = sample_transaction
 
-        with patch(
-            "bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user
-        ):
-            with patch(
-                "bot.handlers.transaction.transaction_service", mock_transaction_service
-            ):
+        with patch("bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user):
+            with patch("bot.handlers.transaction.transaction_service", mock_transaction_service):
                 with patch(
                     "bot.handlers.transaction.get_category_by_id",
                     return_value=Category(
@@ -251,21 +232,17 @@ class TestExpenseCommandE2E:
 
                     # Assert - Should send confirmation
                     mock_callback_query_update.callback_query.edit_message_text.assert_called_once()
-                    confirmation_message = mock_callback_query_update.callback_query.edit_message_text.call_args[
-                        0
-                    ][
-                        0
-                    ]
+                    confirmation_message = (
+                        mock_callback_query_update.callback_query.edit_message_text.call_args[0][0]
+                    )
 
                     # Verify confirmation contains transaction details per contracts/messages.yaml
                     assert "TX20251218001" in confirmation_message  # Transaction ID
                     assert (
-                        "250,000" in confirmation_message
-                        or "250.000" in confirmation_message
+                        "250,000" in confirmation_message or "250.000" in confirmation_message
                     )  # Amount formatted
                     assert (
-                        "Supplies" in confirmation_message
-                        or "📦" in confirmation_message
+                        "Supplies" in confirmation_message or "📦" in confirmation_message
                     )  # Category
 
     @pytest.mark.asyncio
@@ -352,12 +329,8 @@ class TestExpenseCommandE2E:
         mock_telegram_update.message.text = "/expense 100000"  # No description
         mock_transaction_service.record_expense.return_value = sample_transaction
 
-        with patch(
-            "bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user
-        ):
-            with patch(
-                "bot.handlers.transaction.transaction_service", mock_transaction_service
-            ):
+        with patch("bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user):
+            with patch("bot.handlers.transaction.transaction_service", mock_transaction_service):
                 # Act
                 await expense_command_handler(mock_telegram_update, mock_context)
 
@@ -374,9 +347,7 @@ class TestExpenseCommandE2E:
         # Arrange
         mock_telegram_update.message.text = "/expense abc Invalid amount"
 
-        with patch(
-            "bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user
-        ):
+        with patch("bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user):
             # Act
             await expense_command_handler(mock_telegram_update, mock_context)
 
@@ -397,9 +368,7 @@ class TestExpenseCommandE2E:
         # Arrange
         mock_telegram_update.message.text = "/expense 10000000001 Too large"
 
-        with patch(
-            "bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user
-        ):
+        with patch("bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user):
             # Act
             await expense_command_handler(mock_telegram_update, mock_context)
 
@@ -413,9 +382,7 @@ class TestExpenseCommandE2E:
             )
 
     @pytest.mark.asyncio
-    async def test_expense_unauthorized_user_denied(
-        self, mock_telegram_update, mock_context
-    ):
+    async def test_expense_unauthorized_user_denied(self, mock_telegram_update, mock_context):
         """Should deny access to unauthorized users."""
         # Arrange
         unauthorized_user = User(
@@ -455,16 +422,10 @@ class TestExpenseCommandE2E:
         mock_telegram_update.message.text = "/expense 100000 Duplicate test"
 
         # Mock duplicate detection
-        mock_transaction_service.check_duplicate_expense.return_value = [
-            sample_transaction
-        ]
+        mock_transaction_service.check_duplicate_expense.return_value = [sample_transaction]
 
-        with patch(
-            "bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user
-        ):
-            with patch(
-                "bot.handlers.transaction.transaction_service", mock_transaction_service
-            ):
+        with patch("bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user):
+            with patch("bot.handlers.transaction.transaction_service", mock_transaction_service):
                 # Act
                 await expense_command_handler(mock_telegram_update, mock_context)
 
@@ -483,9 +444,7 @@ class TestExpenseCommandE2E:
                     assert isinstance(keyboard, InlineKeyboardMarkup)
 
     @pytest.mark.asyncio
-    async def test_expense_interactive_mode_sequential_prompts(
-        self, mock_context, sample_user
-    ):
+    async def test_expense_interactive_mode_sequential_prompts(self, mock_context, sample_user):
         """Should use sequential prompts for keyboard-based expense entry per FR-029."""
         # Arrange - /expense with no args triggers interactive mode
         mock_update = Mock(spec=Update)
@@ -495,18 +454,14 @@ class TestExpenseCommandE2E:
         mock_update.message.text = "/expense"
         mock_update.message.reply_text = AsyncMock()
 
-        with patch(
-            "bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user
-        ):
+        with patch("bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user):
             # Act
             await expense_command_handler(mock_update, mock_context)
 
             # Assert - Should prompt for amount first
             mock_update.message.reply_text.assert_called_once()
             prompt_message = mock_update.message.reply_text.call_args[0][0]
-            assert (
-                "amount" in prompt_message.lower() or "enter" in prompt_message.lower()
-            )
+            assert "amount" in prompt_message.lower() or "enter" in prompt_message.lower()
 
     @pytest.mark.asyncio
     async def test_expense_callback_query_acknowledged(
@@ -517,17 +472,16 @@ class TestExpenseCommandE2E:
         sample_user,
         sample_transaction,
     ):
-        """Should acknowledge callback query to prevent loading indicator per Telegram best practices."""
+        """Should acknowledge callback query to prevent loading indicator."""
         # Arrange
-        mock_context.user_data = {"amount": Decimal("100000"), "description": "Test"}
+        mock_context.user_data = {
+            "amount": Decimal("100000"),
+            "description": "Test",
+        }
         mock_transaction_service.record_expense.return_value = sample_transaction
 
-        with patch(
-            "bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user
-        ):
-            with patch(
-                "bot.handlers.transaction.transaction_service", mock_transaction_service
-            ):
+        with patch("bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user):
+            with patch("bot.handlers.transaction.transaction_service", mock_transaction_service):
                 with patch(
                     "bot.handlers.transaction.get_category_by_id",
                     return_value=Category(

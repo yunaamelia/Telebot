@@ -3,9 +3,9 @@ from decimal import Decimal
 
 import pytest
 
-from bot.utils.validators import AmountValidationError
-from bot.utils.validators import parse_amount
-from bot.utils.validators import validate_amount
+from src.bot.utils.validators import AmountValidationError
+from src.bot.utils.validators import parse_amount
+from src.bot.utils.validators import validate_amount
 
 
 class TestParseAmount:

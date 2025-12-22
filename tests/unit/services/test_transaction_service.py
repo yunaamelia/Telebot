@@ -8,11 +8,11 @@ from unittest.mock import patch
 
 import pytest
 
-from bot.models.transaction import Transaction
-from bot.models.user import User
-from bot.repositories.transaction_repository import TransactionRepository
-from bot.services.transaction_service import TransactionService
-from bot.utils.validators import AmountValidationError
+from src.bot.models.transaction import Transaction
+from src.bot.models.user import User
+from src.bot.repositories.transaction_repository import TransactionRepository
+from src.bot.services.transaction_service import TransactionService
+from src.bot.utils.validators import AmountValidationError
 
 
 @pytest.fixture

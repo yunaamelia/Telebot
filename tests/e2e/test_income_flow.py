@@ -15,12 +15,12 @@ from telegram import Update
 from telegram import User as TelegramUser
 from telegram.ext import ContextTypes
 
-from bot.handlers.transaction import income_amount_handler
-from bot.handlers.transaction import income_command_handler
-from bot.handlers.transaction import income_description_handler
-from bot.models.transaction import Transaction
-from bot.models.user import User
-from bot.services.transaction_service import TransactionService
+from src.bot.handlers.transaction import income_amount_handler
+from src.bot.handlers.transaction import income_command_handler
+from src.bot.handlers.transaction import income_description_handler
+from src.bot.models.transaction import Transaction
+from src.bot.models.user import User
+from src.bot.services.transaction_service import TransactionService
 
 
 @pytest.fixture

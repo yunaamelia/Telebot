@@ -4,10 +4,10 @@ from decimal import Decimal
 
 import pytest
 
-from bot.utils.formatters import format_currency
-from bot.utils.formatters import format_currency_with_sign
-from bot.utils.formatters import generate_transaction_id
-from bot.utils.formatters import parse_transaction_id
+from src.bot.utils.formatters import format_currency
+from src.bot.utils.formatters import format_currency_with_sign
+from src.bot.utils.formatters import generate_transaction_id
+from src.bot.utils.formatters import parse_transaction_id
 
 
 class TestFormatCurrency:

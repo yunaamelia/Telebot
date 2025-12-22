@@ -11,15 +11,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
 from testcontainers.postgres import PostgresContainer
 
-from bot.models.category import Base as CategoryBase
-from bot.models.category import Category
-from bot.models.transaction import Base as TransactionBase
-from bot.models.transaction import Transaction
-from bot.models.user import Base as UserBase
-from bot.models.user import User
-from bot.repositories.transaction_repository import TransactionRepository
-from bot.repositories.user_repository import UserRepository
-from bot.services.transaction_service import TransactionService
+from src.bot.models.category import Base as CategoryBase
+from src.bot.models.category import Category
+from src.bot.models.transaction import Base as TransactionBase
+from src.bot.models.transaction import Transaction
+from src.bot.models.user import Base as UserBase
+from src.bot.models.user import User
+from src.bot.repositories.transaction_repository import TransactionRepository
+from src.bot.repositories.user_repository import UserRepository
+from src.bot.services.transaction_service import TransactionService
 
 
 @pytest.fixture(scope="module")

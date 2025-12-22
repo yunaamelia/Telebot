@@ -3,8 +3,6 @@
 Following TDD: These tests are written FIRST and should FAIL until implementation.
 Tests the record_expense method with category selection logic.
 """
-
-from datetime import date
 from datetime import datetime
 from decimal import Decimal
 from unittest.mock import AsyncMock
@@ -13,13 +11,13 @@ from unittest.mock import patch
 
 import pytest
 
-from bot.models.category import Category
-from bot.models.transaction import Transaction
-from bot.models.user import User
-from bot.repositories.category_repository import CategoryRepository
-from bot.repositories.transaction_repository import TransactionRepository
-from bot.services.transaction_service import TransactionService
-from bot.utils.validators import AmountValidationError
+from src.bot.models.category import Category
+from src.bot.models.transaction import Transaction
+from src.bot.models.user import User
+from src.bot.repositories.category_repository import CategoryRepository
+from src.bot.repositories.transaction_repository import TransactionRepository
+from src.bot.services.transaction_service import TransactionService
+from src.bot.utils.validators import AmountValidationError
 
 
 @pytest.fixture
@@ -67,18 +65,10 @@ def sample_user():
 def expense_categories():
     """Create sample expense categories."""
     return [
-        Category(
-            category_id=2, name="Operational", type="expense", emoji="🏢", sort_order=2
-        ),
-        Category(
-            category_id=3, name="Salaries", type="expense", emoji="👔", sort_order=3
-        ),
-        Category(
-            category_id=4, name="Supplies", type="expense", emoji="📦", sort_order=4
-        ),
-        Category(
-            category_id=5, name="Marketing", type="expense", emoji="📢", sort_order=5
-        ),
+        Category(category_id=2, name="Operational", type="expense", emoji="🏢", sort_order=2),
+        Category(category_id=3, name="Salaries", type="expense", emoji="👔", sort_order=3),
+        Category(category_id=4, name="Supplies", type="expense", emoji="📦", sort_order=4),
+        Category(category_id=5, name="Marketing", type="expense", emoji="📢", sort_order=5),
         Category(category_id=6, name="Other", type="expense", emoji="➕", sort_order=6),
     ]
 
@@ -224,18 +214,14 @@ class TestRecordExpense:
             assert result.description == description
 
     @pytest.mark.asyncio
-    async def test_record_expense_invalid_amount_zero(
-        self, transaction_service, sample_user
-    ):
+    async def test_record_expense_invalid_amount_zero(self, transaction_service, sample_user):
         """Should raise AmountValidationError for zero amount."""
         # Arrange
         amount = Decimal("0")
         category_name = "Supplies"
 
         # Act & Assert
-        with pytest.raises(
-            AmountValidationError, match="Amount must be greater than 0"
-        ):
+        with pytest.raises(AmountValidationError, match="Amount must be greater than 0"):
             await transaction_service.record_expense(
                 user=sample_user,
                 amount=amount,
@@ -244,18 +230,14 @@ class TestRecordExpense:
             )
 
     @pytest.mark.asyncio
-    async def test_record_expense_invalid_amount_negative(
-        self, transaction_service, sample_user
-    ):
+    async def test_record_expense_invalid_amount_negative(self, transaction_service, sample_user):
         """Should raise AmountValidationError for negative amount."""
         # Arrange
         amount = Decimal("-100000")
         category_name = "Supplies"
 
         # Act & Assert
-        with pytest.raises(
-            AmountValidationError, match="Amount must be greater than 0"
-        ):
+        with pytest.raises(AmountValidationError, match="Amount must be greater than 0"):
             await transaction_service.record_expense(
                 user=sample_user,
                 amount=amount,
@@ -264,9 +246,7 @@ class TestRecordExpense:
             )
 
     @pytest.mark.asyncio
-    async def test_record_expense_amount_exceeds_maximum(
-        self, transaction_service, sample_user
-    ):
+    async def test_record_expense_amount_exceeds_maximum(self, transaction_service, sample_user):
         """Should raise AmountValidationError when amount exceeds Rp 10 billion per FR-022."""
         # Arrange
         amount = Decimal("10000000001")  # 10 billion + 1
@@ -312,7 +292,6 @@ class TestRecordExpense:
         """Should detect duplicate expense within 60-second window per FR-023."""
         # Arrange
         amount = Decimal("150000")
-        category_name = "Supplies"
         description = "Paper and ink"
 
         supplies_category = expense_categories[2]
@@ -329,9 +308,7 @@ class TestRecordExpense:
             timestamp=datetime.now(),
             status="recorded",
         )
-        mock_transaction_repository.find_duplicates.return_value = [
-            duplicate_transaction
-        ]
+        mock_transaction_repository.find_duplicates.return_value = [duplicate_transaction]
 
         # Act
         duplicates = await transaction_service.check_duplicate_expense(

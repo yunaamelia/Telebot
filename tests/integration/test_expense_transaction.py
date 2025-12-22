@@ -13,16 +13,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
 from testcontainers.postgres import PostgresContainer
 
-from bot.models.category import Base as CategoryBase
-from bot.models.category import Category
-from bot.models.transaction import Base as TransactionBase
-from bot.models.transaction import Transaction
-from bot.models.user import Base as UserBase
-from bot.models.user import User
-from bot.repositories.category_repository import CategoryRepository
-from bot.repositories.transaction_repository import TransactionRepository
-from bot.repositories.user_repository import UserRepository
-from bot.services.transaction_service import TransactionService
+from src.bot.models.category import Base as CategoryBase
+from src.bot.models.category import Category
+from src.bot.models.transaction import Base as TransactionBase
+from src.bot.models.transaction import Transaction
+from src.bot.models.user import Base as UserBase
+from src.bot.models.user import User
+from src.bot.repositories.category_repository import CategoryRepository
+from src.bot.repositories.transaction_repository import TransactionRepository
+from src.bot.services.transaction_service import TransactionService
 
 
 @pytest.fixture(scope="module")
@@ -133,7 +132,10 @@ class TestExpenseTransactionIntegration:
 
         # Act
         result = await transaction_service.record_expense(
-            user=test_user, amount=amount, category_name=category_name, description=description
+            user=test_user,
+            amount=amount,
+            category_name=category_name,
+            description=description,
         )
 
         # Assert - Verify transaction was created
@@ -167,7 +169,10 @@ class TestExpenseTransactionIntegration:
         for category_name, amount, description in test_cases:
             # Act
             result = await transaction_service.record_expense(
-                user=test_user, amount=amount, category_name=category_name, description=description
+                user=test_user,
+                amount=amount,
+                category_name=category_name,
+                description=description,
             )
 
             # Assert
@@ -271,12 +276,18 @@ class TestExpenseTransactionIntegration:
         description = "Duplicate test"
 
         first_transaction = await transaction_service.record_expense(
-            user=test_user, amount=amount, category_name=category_name, description=description
+            user=test_user,
+            amount=amount,
+            category_name=category_name,
+            description=description,
         )
 
         # Act - Check for duplicates immediately
         duplicates = await transaction_service.check_duplicate_expense(
-            user=test_user, amount=amount, category_id=4, description=description  # Supplies
+            user=test_user,
+            amount=amount,
+            category_id=4,
+            description=description,  # Supplies
         )
 
         # Assert - Should find the duplicate
@@ -295,7 +306,10 @@ class TestExpenseTransactionIntegration:
 
         # Act
         result = await transaction_service.record_expense(
-            user=test_user, amount=amount, category_name=category_name, description="Timezone test"
+            user=test_user,
+            amount=amount,
+            category_name=category_name,
+            description="Timezone test",
         )
 
         # Assert - Verify timestamp has timezone info (UTC)
@@ -316,7 +330,10 @@ class TestExpenseTransactionIntegration:
 
         # Act
         result = await transaction_service.record_expense(
-            user=test_user, amount=amount, category_name=category_name, description="Date test"
+            user=test_user,
+            amount=amount,
+            category_name=category_name,
+            description="Date test",
         )
 
         # Assert - transaction_date should be set
@@ -338,7 +355,10 @@ class TestExpenseTransactionIntegration:
 
         # Act
         result = await transaction_service.record_expense(
-            user=test_user, amount=amount, category_name=category_name, description="Status test"
+            user=test_user,
+            amount=amount,
+            category_name=category_name,
+            description="Status test",
         )
 
         # Assert
@@ -360,7 +380,10 @@ class TestExpenseTransactionIntegration:
         # Act & Assert
         with pytest.raises(ValueError, match="Category not found"):
             await transaction_service.record_expense(
-                user=test_user, amount=amount, category_name=invalid_category, description="Test"
+                user=test_user,
+                amount=amount,
+                category_name=invalid_category,
+                description="Test",
             )
 
     @pytest.mark.asyncio

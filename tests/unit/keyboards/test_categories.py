@@ -7,8 +7,8 @@ import pytest
 from telegram import InlineKeyboardButton
 from telegram import InlineKeyboardMarkup
 
-from bot.keyboards.categories import create_category_keyboard
-from bot.models.category import Category
+from src.bot.keyboards.categories import create_category_keyboard
+from src.bot.models.category import Category
 
 
 @pytest.fixture
