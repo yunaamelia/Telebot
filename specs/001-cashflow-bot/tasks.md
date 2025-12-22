@@ -171,21 +171,21 @@
 
 ### Tests for User Story 3 (TDD: Write FIRST, ensure they FAIL)
 
-- [ ] T066 [P] [US3] Unit test for daily summary calculation in tests/unit/services/test_report_service.py
-- [ ] T067 [P] [US3] Unit test for net cash flow calculation in tests/unit/services/test_report_service.py (income - expenses)
-- [ ] T068 [US3] Integration test for summary generation in tests/integration/test_summary.py with sample transactions
-- [ ] T069 [US3] E2E test for /summary command in tests/e2e/test_summary_flow.py
+- [X] T066 [P] [US3] Unit test for daily summary calculation in tests/unit/services/test_report_service.py
+- [X] T067 [P] [US3] Unit test for net cash flow calculation in tests/unit/services/test_report_service.py (income - expenses)
+- [X] T068 [US3] Integration test for summary generation in tests/integration/test_summary.py with sample transactions
+- [X] T069 [US3] E2E test for /summary command in tests/e2e/test_summary_flow.py
 
 ### Implementation for User Story 3
 
-- [ ] T070 [P] [US3] Implement ReportService.generate_daily_summary() in src/bot/services/report_service.py per FR-007
-- [ ] T071 [P] [US3] Implement category breakdown aggregation in ReportService with SQL GROUP BY
-- [ ] T072 [US3] Create summary command handler in src/bot/handlers/summary.py for /summary
-- [ ] T073 [US3] Create summary message formatter in src/bot/utils/formatters.py with emoji, headers, totals
-- [ ] T074 [US3] Implement zero-transaction day handling per US3 AS2 with "No transactions recorded" message
-- [ ] T075 [US3] Add summary keyboard button in main menu linking to summary handler
-- [ ] T076 [US3] Add net cash flow positive/negative indicator (+ green, - red with emoji)
-- [ ] T077 [US3] Add transaction count and category subtotals per US3 AS1
+- [X] T070 [P] [US3] Implement ReportService.generate_daily_summary() in src/bot/services/report_service.py per FR-007
+- [X] T071 [P] [US3] Implement category breakdown aggregation in ReportService with SQL GROUP BY
+- [X] T072 [US3] Create summary command handler in src/bot/handlers/summary.py for /summary
+- [X] T073 [US3] Create summary message formatter in src/bot/utils/formatters.py with emoji, headers, totals
+- [X] T074 [US3] Implement zero-transaction day handling per US3 AS2 with "No transactions recorded" message
+- [X] T075 [US3] Add summary keyboard button in main menu linking to summary handler
+- [X] T076 [US3] Add net cash flow positive/negative indicator (+ green, - red with emoji)
+- [X] T077 [US3] Add transaction count and category subtotals per US3 AS1
 
 **Checkpoint**: ✅ User Stories 1, 2, AND 3 complete - Can record and view daily financial status
 
