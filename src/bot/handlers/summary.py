@@ -7,9 +7,9 @@ from telegram import Update
 from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 
-from bot.repositories.user_repository import UserRepository
-from bot.services.report_service import ReportService
-from bot.utils.formatters import format_daily_summary
+from src.bot.repositories.user_repository import UserRepository
+from src.bot.services.report_service import ReportService
+from src.bot.utils.formatters import format_daily_summary
 
 
 logger = structlog.get_logger(__name__)

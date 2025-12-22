@@ -5,7 +5,7 @@ Provides inline keyboard markup for expense category selection per data-model.md
 from telegram import InlineKeyboardButton
 from telegram import InlineKeyboardMarkup
 
-from bot.models.category import Category
+from src.bot.models.category import Category
 
 
 def create_expense_category_keyboard(

@@ -147,7 +147,7 @@ def format_daily_summary(summary) -> str:
     Example:
         >>> from decimal import Decimal
         >>> from datetime import date
-        >>> from bot.models.report import DailySummary
+        >>> from src.bot.models.report import DailySummary
         >>> summary = DailySummary(
         ...     summary_date=date(2025, 12, 18),
         ...     total_income=Decimal("2500000"),

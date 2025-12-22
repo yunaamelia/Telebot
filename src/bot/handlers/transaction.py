@@ -8,12 +8,12 @@ from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 from telegram.ext import ConversationHandler
 
-from bot.repositories.category_repository import CategoryRepository
-from bot.repositories.user_repository import UserRepository
-from bot.services.notification_service import NotificationService
-from bot.services.transaction_service import TransactionService
-from bot.utils.validators import AmountValidationError
-from bot.utils.validators import parse_amount
+from src.bot.repositories.category_repository import CategoryRepository
+from src.bot.repositories.user_repository import UserRepository
+from src.bot.services.notification_service import NotificationService
+from src.bot.services.transaction_service import TransactionService
+from src.bot.utils.validators import AmountValidationError
+from src.bot.utils.validators import parse_amount
 
 
 logger = structlog.get_logger(__name__)
@@ -402,7 +402,7 @@ async def expense_command_handler(update: Update, context: ContextTypes.DEFAULT_
             categories = await category_repository.find_by_type("expense")
 
             # Import here to avoid circular dependency
-            from bot.keyboards.categories import create_expense_category_keyboard
+            from src.bot.keyboards.categories import create_expense_category_keyboard
 
             keyboard = create_expense_category_keyboard(categories)
 
@@ -514,7 +514,7 @@ async def expense_description_handler(update: Update, context: ContextTypes.DEFA
     # Show category selection
     categories = await category_repository.find_by_type("expense")
 
-    from bot.keyboards.categories import create_expense_category_keyboard
+    from src.bot.keyboards.categories import create_expense_category_keyboard
 
     keyboard = create_expense_category_keyboard(categories)
 
