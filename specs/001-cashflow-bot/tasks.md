@@ -159,9 +159,7 @@
 
 **Checkpoint**: ✅ User Stories 1 AND 2 complete - Can record both income and expense transactions
 
-
 ---
-
 
 ## Phase 5: User Story 3 - View Daily Summary On-Demand (Priority: P2)
 
