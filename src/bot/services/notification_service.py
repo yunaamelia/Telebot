@@ -29,7 +29,10 @@ class NotificationService:
         self.bot = bot
 
     async def send_confirmation(
-        self, chat_id: int, transaction: Transaction, category: Optional[Category] = None
+        self,
+        chat_id: int,
+        transaction: Transaction,
+        category: Optional[Category] = None,
     ) -> None:
         """Send transaction confirmation message to user.
 
@@ -203,3 +206,84 @@ class NotificationService:
                 error=str(e),
             )
             raise
+
+    async def send_daily_report_with_retry(
+        self,
+        chat_id: int,
+        report_text: str,
+        max_retries: int = 6,
+        retry_interval: int = 300,
+    ) -> None:
+        """Send daily report with retry logic per FR-018.
+
+        Retries delivery on network failures with 5-minute intervals.
+        Maximum retry window is 30 minutes (6 attempts total).
+
+        Args:
+            chat_id: Telegram chat ID to send report to
+            report_text: Formatted report message
+            max_retries: Maximum retry attempts (default 6 = 30 min window)
+            retry_interval: Seconds between retries (default 300 = 5 min)
+
+        Raises:
+            TelegramError: If delivery fails after all retries
+
+        Example:
+            >>> await service.send_daily_report_with_retry(
+            ...     chat_id=123456789,
+            ...     report_text="Daily Report..."
+            ... )
+        """
+        from telegram.error import NetworkError, TimedOut
+        import asyncio
+
+        logger.info(
+            "Sending daily report with retry",
+            chat_id=chat_id,
+            max_retries=max_retries,
+            retry_interval=retry_interval,
+        )
+
+        for attempt in range(max_retries):
+            try:
+                await self.bot.send_message(
+                    chat_id=chat_id, text=report_text, parse_mode=ParseMode.HTML
+                )
+
+                logger.info(
+                    "Daily report sent successfully",
+                    chat_id=chat_id,
+                    attempt=attempt + 1,
+                )
+                return
+
+            except (NetworkError, TimedOut) as e:
+                logger.warning(
+                    "Daily report delivery failed, will retry",
+                    chat_id=chat_id,
+                    attempt=attempt + 1,
+                    max_retries=max_retries,
+                    error=str(e),
+                )
+
+                if attempt < max_retries - 1:
+                    # Wait before retry (except on last attempt)
+                    await asyncio.sleep(retry_interval)
+                else:
+                    # Final attempt failed
+                    logger.error(
+                        "Daily report delivery failed after all retries",
+                        chat_id=chat_id,
+                        total_attempts=max_retries,
+                    )
+                    raise
+
+            except Exception as e:
+                # Non-retryable error
+                logger.exception(
+                    "Daily report delivery failed with non-retryable error",
+                    chat_id=chat_id,
+                    attempt=attempt + 1,
+                    error=str(e),
+                )
+                raise

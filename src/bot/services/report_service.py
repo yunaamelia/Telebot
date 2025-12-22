@@ -127,3 +127,102 @@ class ReportService:
         )
 
         return summary
+
+    async def generate_daily_report(self, report_date: date) -> dict:
+        """Generate daily financial report for automated delivery per US4.
+
+        Generates comprehensive daily report with formatted strings ready
+        for message delivery. Handles zero-transaction days per US4 AS2.
+
+        Args:
+            report_date: Date to generate report for
+
+        Returns:
+            Dictionary with formatted report data:
+                - date: "22 Dec 2025"
+                - total_income: "Rp 5,000,000"
+                - total_expenses: "Rp 3,500,000"
+                - net_cash_flow: "Rp 1,500,000"
+                - net_cash_flow_indicator: "📈" or "📉"
+                - category_breakdown: Multi-line formatted string
+                - transaction_count: 3
+                - income_count: 1
+                - expense_count: 2
+
+        Example:
+            >>> report = await service.generate_daily_report(date(2025, 12, 22))
+            >>> print(report["net_cash_flow"])
+            "Rp 1,500,000"
+        """
+        from src.bot.repositories.category_repository import CategoryRepository
+        from src.bot.utils.formatters import format_currency
+        from src.database.session import get_async_session
+
+        logger.info("Generating daily report", report_date=report_date.isoformat())
+
+        # Generate summary data
+        summary = await self.generate_daily_summary(report_date)
+
+        # Format date
+        formatted_date = report_date.strftime("%d %b %Y")
+
+        # Format monetary values
+        formatted_income = format_currency(summary.total_income)
+        formatted_expenses = format_currency(summary.total_expenses)
+        formatted_net_cash_flow = format_currency(summary.net_cash_flow)
+
+        # Determine net cash flow indicator
+        if summary.net_cash_flow > 0:
+            net_indicator = "📈"
+        elif summary.net_cash_flow < 0:
+            net_indicator = "📉"
+        else:
+            net_indicator = "➖"
+
+        # Format category breakdown
+        if summary.transaction_count == 0:
+            # Zero transactions case per US4 AS2
+            category_breakdown = "ℹ️ No expenses today"
+        else:
+            # Get category details for formatting
+            async with get_async_session() as session:
+                category_repo = CategoryRepository(session)
+                categories = {}
+                for category_id in summary.category_breakdown.keys():
+                    category = await category_repo.get_by_id(category_id)
+                    if category:
+                        categories[category_id] = category
+
+            # Build category breakdown lines
+            breakdown_lines = []
+            for category_id, amount in summary.category_breakdown.items():
+                category = categories.get(category_id)
+                if category:
+                    emoji = category.emoji
+                    name = category.name
+                    formatted_amount = format_currency(amount)
+                    breakdown_lines.append(
+                        f"{emoji} <b>{name}:</b> <code>{formatted_amount}</code>"
+                    )
+
+            category_breakdown = "\n".join(breakdown_lines) if breakdown_lines else "ℹ️ No expenses"
+
+        report_data = {
+            "date": formatted_date,
+            "total_income": formatted_income,
+            "total_expenses": formatted_expenses,
+            "net_cash_flow": formatted_net_cash_flow,
+            "net_cash_flow_indicator": net_indicator,
+            "category_breakdown": category_breakdown,
+            "transaction_count": summary.transaction_count,
+            "income_count": summary.income_count,
+            "expense_count": summary.expense_count,
+        }
+
+        logger.info(
+            "Daily report generated",
+            report_date=report_date.isoformat(),
+            transaction_count=summary.transaction_count,
+        )
+
+        return report_data
