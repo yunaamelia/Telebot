@@ -7,7 +7,7 @@ import pytest
 from telegram import InlineKeyboardButton
 from telegram import InlineKeyboardMarkup
 
-from src.bot.keyboards.categories import create_category_keyboard
+from src.bot.keyboards.categories import create_expense_category_keyboard
 from src.bot.models.category import Category
 
 
@@ -26,16 +26,16 @@ def expense_categories():
 class TestCategoryKeyboard:
     """Test category selection inline keyboard generation."""
 
-    def test_create_category_keyboard_returns_markup(self, expense_categories):
+    def test_create_expense_category_keyboard_returns_markup(self, expense_categories):
         """Should return InlineKeyboardMarkup object."""
         # Act
-        keyboard = create_category_keyboard(expense_categories)
+        keyboard = create_expense_category_keyboard(expense_categories)
 
         # Assert
         assert isinstance(keyboard, InlineKeyboardMarkup)
         assert keyboard is not None
 
-    def test_create_category_keyboard_layout_structure(self, expense_categories):
+    def test_create_expense_category_keyboard_layout_structure(self, expense_categories):
         """Should create keyboard with correct row layout per contracts/commands.yaml.
 
         Expected layout:
@@ -44,7 +44,7 @@ class TestCategoryKeyboard:
         Row 3: [➕ Other]
         """
         # Act
-        keyboard = create_category_keyboard(expense_categories)
+        keyboard = create_expense_category_keyboard(expense_categories)
 
         # Assert
         assert len(keyboard.inline_keyboard) == 3  # 3 rows
@@ -63,10 +63,10 @@ class TestCategoryKeyboard:
         assert len(keyboard.inline_keyboard[2]) == 1
         assert keyboard.inline_keyboard[2][0].text == "➕ Other"
 
-    def test_create_category_keyboard_button_text_format(self, expense_categories):
+    def test_create_expense_category_keyboard_button_text_format(self, expense_categories):
         """Should format button text with emoji and category name."""
         # Act
-        keyboard = create_category_keyboard(expense_categories)
+        keyboard = create_expense_category_keyboard(expense_categories)
 
         # Assert
         all_buttons = [btn for row in keyboard.inline_keyboard for btn in row]
@@ -76,10 +76,10 @@ class TestCategoryKeyboard:
         actual_texts = [btn.text for btn in all_buttons]
         assert actual_texts == expected_texts
 
-    def test_create_category_keyboard_callback_data(self, expense_categories):
+    def test_create_expense_category_keyboard_callback_data(self, expense_categories):
         """Should set callback_data with category ID for handler routing."""
         # Act
-        keyboard = create_category_keyboard(expense_categories)
+        keyboard = create_expense_category_keyboard(expense_categories)
 
         # Assert
         all_buttons = [btn for row in keyboard.inline_keyboard for btn in row]
@@ -96,7 +96,7 @@ class TestCategoryKeyboard:
         actual_callbacks = [btn.callback_data for btn in all_buttons]
         assert actual_callbacks == expected_callbacks
 
-    def test_create_category_keyboard_respects_sort_order(self):
+    def test_create_expense_category_keyboard_respects_sort_order(self):
         """Should display categories in sort_order sequence."""
         # Arrange - Categories with mixed sort orders
         unsorted_categories = [
@@ -108,7 +108,7 @@ class TestCategoryKeyboard:
         ]
 
         # Act
-        keyboard = create_category_keyboard(unsorted_categories)
+        keyboard = create_expense_category_keyboard(unsorted_categories)
 
         # Assert - Should be displayed in sort_order (2, 3, 4, 5, 6)
         all_buttons = [btn for row in keyboard.inline_keyboard for btn in row]
@@ -124,19 +124,19 @@ class TestCategoryKeyboard:
 
         assert actual_order == expected_order
 
-    def test_create_category_keyboard_empty_list(self):
+    def test_create_expense_category_keyboard_empty_list(self):
         """Should handle empty category list gracefully."""
         # Arrange
         empty_categories = []
 
         # Act
-        keyboard = create_category_keyboard(empty_categories)
+        keyboard = create_expense_category_keyboard(empty_categories)
 
         # Assert
         assert isinstance(keyboard, InlineKeyboardMarkup)
         assert len(keyboard.inline_keyboard) == 0  # No buttons
 
-    def test_create_category_keyboard_single_category(self):
+    def test_create_expense_category_keyboard_single_category(self):
         """Should handle single category correctly."""
         # Arrange
         single_category = [
@@ -144,7 +144,7 @@ class TestCategoryKeyboard:
         ]
 
         # Act
-        keyboard = create_category_keyboard(single_category)
+        keyboard = create_expense_category_keyboard(single_category)
 
         # Assert
         assert len(keyboard.inline_keyboard) == 1
@@ -152,7 +152,7 @@ class TestCategoryKeyboard:
         assert keyboard.inline_keyboard[0][0].text == "➕ Other"
         assert keyboard.inline_keyboard[0][0].callback_data == "category_6"
 
-    def test_create_category_keyboard_filters_income_categories(self):
+    def test_create_expense_category_keyboard_filters_income_categories(self):
         """Should only include expense categories, filter out income categories."""
         # Arrange
         mixed_categories = [
@@ -162,7 +162,7 @@ class TestCategoryKeyboard:
         ]
 
         # Act
-        keyboard = create_category_keyboard(mixed_categories)
+        keyboard = create_expense_category_keyboard(mixed_categories)
 
         # Assert
         all_buttons = [btn for row in keyboard.inline_keyboard for btn in row]
@@ -173,10 +173,10 @@ class TestCategoryKeyboard:
         assert "🏢 Operational" in button_texts
         assert "👔 Salaries" in button_texts
 
-    def test_create_category_keyboard_button_objects(self, expense_categories):
+    def test_create_expense_category_keyboard_button_objects(self, expense_categories):
         """Should create proper InlineKeyboardButton objects."""
         # Act
-        keyboard = create_category_keyboard(expense_categories)
+        keyboard = create_expense_category_keyboard(expense_categories)
 
         # Assert
         for row in keyboard.inline_keyboard:
