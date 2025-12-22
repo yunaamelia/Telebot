@@ -107,23 +107,23 @@
 
 ### Tests for User Story 1 (TDD: Write FIRST, ensure they FAIL)
 
-- [ ] T038 [P] [US1] Unit test for amount parsing in tests/unit/utils/test_validators.py (test cases: "500000", "500,000", "500.000", "abc")
-- [ ] T039 [P] [US1] Unit test for transaction ID generation in tests/unit/utils/test_formatters.py (verify TX20251218001 format)
-- [ ] T040 [P] [US1] Unit test for income service in tests/unit/services/test_transaction_service.py (test record_income with valid/invalid amounts)
-- [ ] T041 [US1] Integration test for income recording in tests/integration/test_income_transaction.py with Testcontainers PostgreSQL
-- [ ] T042 [US1] E2E test for /income command in tests/e2e/test_income_flow.py with mock Telegram Update
+- [X] T038 [P] [US1] Unit test for amount parsing in tests/unit/utils/test_validators.py (test cases: "500000", "500,000", "500.000", "abc")
+- [X] T039 [P] [US1] Unit test for transaction ID generation in tests/unit/utils/test_formatters.py (verify TX20251218001 format)
+- [X] T040 [P] [US1] Unit test for income service in tests/unit/services/test_transaction_service.py (test record_income with valid/invalid amounts)
+- [X] T041 [US1] Integration test for income recording in tests/integration/test_income_transaction.py with Testcontainers PostgreSQL
+- [X] T042 [US1] E2E test for /income command in tests/e2e/test_income_flow.py with mock Telegram Update
 
 ### Implementation for User Story 1
 
-- [ ] T043 [P] [US1] Implement TransactionService.record_income() in src/bot/services/transaction_service.py with amount validation
-- [ ] T044 [P] [US1] Implement NotificationService.send_confirmation() in src/bot/services/notification_service.py with HTML formatting
-- [ ] T045 [US1] Create income command handler in src/bot/handlers/transaction.py for /income [amount] [description]
-- [ ] T046 [US1] Create income confirmation message template in contracts/messages.yaml integration (already exists, verify usage)
-- [ ] T047 [US1] Implement sequential prompt flow for keyboard-based income entry per FR-029 using ConversationHandler
-- [ ] T048 [US1] Add duplicate detection check in TransactionService with 60-second window query per edge cases
-- [ ] T049 [US1] Create duplicate confirmation keyboard in src/bot/keyboards/main_menu.py with Yes/No buttons
-- [ ] T050 [US1] Add error handling for invalid amount with usage example per FR-003 in transaction.py
-- [ ] T051 [US1] Add logging for income transactions with user_id, timestamp, amount per FR-021
+- [X] T043 [P] [US1] Implement TransactionService.record_income() in src/bot/services/transaction_service.py with amount validation
+- [X] T044 [P] [US1] Implement NotificationService.send_confirmation() in src/bot/services/notification_service.py with HTML formatting
+- [X] T045 [US1] Create income command handler in src/bot/handlers/transaction.py for /income [amount] [description]
+- [X] T046 [US1] Create income confirmation message template in contracts/messages.yaml integration (already exists, verify usage)
+- [X] T047 [US1] Implement sequential prompt flow for keyboard-based income entry per FR-029 using ConversationHandler
+- [X] T048 [US1] Add duplicate detection check in TransactionService with 60-second window query per edge cases
+- [X] T049 [US1] Create duplicate confirmation keyboard in src/bot/keyboards/main_menu.py with Yes/No buttons
+- [X] T050 [US1] Add error handling for invalid amount with usage example per FR-003 in transaction.py
+- [X] T051 [US1] Add logging for income transactions with user_id, timestamp, amount per FR-021
 
 **Checkpoint**: ✅ User Story 1 complete - Can record income transactions independently
 
@@ -139,10 +139,10 @@
 
 ### Tests for User Story 2 (TDD: Write FIRST, ensure they FAIL)
 
-- [ ] T052 [P] [US2] Unit test for expense service in tests/unit/services/test_transaction_service.py (test record_expense with categories)
-- [ ] T053 [P] [US2] Unit test for category keyboard builder in tests/unit/keyboards/test_categories.py
-- [ ] T054 [US2] Integration test for expense recording in tests/integration/test_expense_transaction.py with category selection
-- [ ] T055 [US2] E2E test for /expense command in tests/e2e/test_expense_flow.py with category callback
+- [X] T052 [P] [US2] Unit test for expense service in tests/unit/services/test_transaction_service.py (test record_expense with categories)
+- [X] T053 [P] [US2] Unit test for category keyboard builder in tests/unit/keyboards/test_categories.py
+- [X] T054 [US2] Integration test for expense recording in tests/integration/test_expense_transaction.py with category selection
+- [X] T055 [US2] E2E test for /expense command in tests/e2e/test_expense_flow.py with category callback
 
 ### Implementation for User Story 2
 
