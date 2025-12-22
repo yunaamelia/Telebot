@@ -201,23 +201,23 @@
 
 ### Tests for User Story 4 (TDD: Write FIRST, ensure they FAIL)
 
-- [ ] T078 [P] [US4] Unit test for scheduler configuration in tests/unit/scheduler/test_daily_report.py with timezone validation
-- [ ] T079 [P] [US4] Unit test for report delivery with retry logic in tests/unit/services/test_notification_service.py
+- [X] T078 [P] [US4] Unit test for scheduler configuration in tests/unit/scheduler/test_daily_report.py with timezone validation
+- [X] T079 [P] [US4] Unit test for report delivery with retry logic in tests/unit/services/test_notification_retry.py
 - [ ] T080 [US4] Integration test for 24:00 WITA trigger in tests/integration/test_scheduler.py with time mocking
 - [ ] T081 [US4] E2E test for full report workflow in tests/e2e/test_daily_report.py
 
-### Implementation for User Story 4
+### Implementation Tasks for User Story 4
 
-- [ ] T082 [P] [US4] Configure APScheduler in src/scheduler/daily_report.py with WITA timezone per FR-009
-- [ ] T083 [P] [US4] Implement daily report job in src/scheduler/daily_report.py calling ReportService
-- [ ] T084 [US4] Implement report delivery to management chat in src/bot/services/notification_service.py per FR-010
-- [ ] T085 [US4] Create comprehensive report message template with date header, financial totals
-- [ ] T086 [US4] Implement retry mechanism in NotificationService with 5-minute intervals, 30-minute max per FR-018
-- [ ] T087 [US4] Implement daily counter reset at 00:01 WITA per FR-019 in scheduler
-- [ ] T088 [US4] Add critical error notification for report delivery failures per FR-030
-- [ ] T089 [US4] Handle zero-transaction days in daily report per US4 AS2
-- [ ] T090 [US4] Add timezone edge case handling for 23:59:59 WITA transactions per edge cases
-- [ ] T091 [US4] Implement manual report recovery with /report [YYYY-MM-DD] command per FR-024
+- [X] T082 [P] [US4] Configure APScheduler in src/scheduler/daily_report.py with WITA timezone per FR-009
+- [X] T083 [P] [US4] Implement daily report job in src/scheduler/daily_report.py calling ReportService
+- [X] T084 [US4] Implement report delivery to management chat in src/bot/services/notification_service.py per FR-010
+- [X] T085 [US4] Create comprehensive report message template with date header, financial totals
+- [X] T086 [US4] Implement retry mechanism in NotificationService with 5-minute intervals, 30-minute max per FR-018
+- [X] T087 [US4] Implement daily counter reset at 00:01 WITA per FR-019 in scheduler
+- [X] T088 [US4] Add critical error notification for report delivery failures per FR-030
+- [X] T089 [US4] Handle zero-transaction days in daily report per US4 AS2
+- [X] T090 [US4] Add timezone edge case handling for 23:59:59 WITA transactions per edge cases
+- [X] T091 [US4] Implement manual report recovery with /report [YYYY-MM-DD] command per FR-024
 
 **Checkpoint**: ✅ User Stories 1-4 complete - Core financial recording and reporting functional with automation
 
@@ -299,7 +299,7 @@
 - [ ] T123 Integration test for /register command in tests/integration/test_registration.py
 - [ ] T124 E2E test for complete registration workflow in tests/e2e/test_auth_flow.py
 
-### Implementation
+### Implementation Tasks for Phase 9
 
 - [ ] T125 [P] Implement AuthService.register_user() in src/bot/services/auth_service.py
 - [ ] T126 [P] Implement AuthService.approve_user() in src/bot/services/auth_service.py
@@ -323,7 +323,7 @@
 
 - [ ] T134 [P] Verify /help command displays all commands in tests/e2e/test_help.py
 
-### Implementation
+### Implementation Tasks for Phase 10
 
 - [ ] T135 [P] Create /help command handler in src/bot/handlers/auth.py
 - [ ] T136 Create help message template with command reference and examples per contracts/messages.yaml
