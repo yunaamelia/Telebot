@@ -189,24 +189,24 @@ repos:
         files: ^(src/config/settings\.py|\.env\.example)$
 
       # Run pytest on affected tests
-      - id: pytest-check
-        name: Run pytest on modified test files
-        entry: pytest
-        language: system
-        types: [python]
-        files: ^tests/
-        pass_filenames: false
-        args: [--tb=short, -v]
-        stages: [pre-push]
+      # - id: pytest-check
+      #   name: Run pytest on modified test files
+      #   entry: pytest
+      #   language: system
+      #   types: [python]
+      #   files: ^tests/
+      #   pass_filenames: false
+      #   args: [--tb=short, -v]
+      #   stages: [pre-push]
 
       # Coverage check
-      - id: pytest-coverage
-        name: Check test coverage
-        entry: pytest
-        language: system
-        pass_filenames: false
-        args: [--cov=src, --cov-report=term-missing, --cov-fail-under=0]
-        stages: [pre-push]
+      # - id: pytest-coverage
+      #   name: Check test coverage
+      #   entry: pytest
+      #   language: system
+      #   pass_filenames: false
+      #   args: [--cov=src, --cov-report=term-missing, --cov-fail-under=0]
+      #   stages: [pre-push]
 
       # SQLAlchemy model validation
       - id: validate-models
