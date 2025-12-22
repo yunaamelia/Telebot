@@ -146,16 +146,16 @@
 
 ### Implementation for User Story 2
 
-- [ ] T056 [P] [US2] Implement TransactionService.record_expense() in src/bot/services/transaction_service.py
-- [ ] T057 [P] [US2] Create category selection keyboard in src/bot/keyboards/categories.py with emoji per data-model.md §categories seed
-- [ ] T058 [US2] Create expense command handler in src/bot/handlers/transaction.py for /expense [amount] [description]
-- [ ] T059 [US2] Implement category callback handler in src/bot/handlers/keyboard.py for category selection
-- [ ] T060 [US2] Create expense confirmation message template usage (verify contracts/messages.yaml)
-- [ ] T061 [US2] Implement sequential prompt flow for keyboard-based expense entry with category step
-- [ ] T062 [P] [US2] Implement quick category shortcuts in src/bot/handlers/transaction.py (/expense_supplies, /expense_operational, etc.)
-- [ ] T063 [US2] Add default description "Uncategorized expense" when skipped per US2 AS5
-- [ ] T064 [US2] Add duplicate detection for expense transactions (reuse from US1)
-- [ ] T065 [US2] Add error handling with category selection guidance
+- [X] T056 [P] [US2] Implement TransactionService.record_expense() in src/bot/services/transaction_service.py
+- [X] T057 [P] [US2] Create category selection keyboard in src/bot/keyboards/categories.py with emoji per data-model.md §categories seed
+- [X] T058 [US2] Create expense command handler in src/bot/handlers/transaction.py for /expense [amount] [description]
+- [X] T059 [US2] Implement category callback handler in src/bot/handlers/keyboard.py for category selection
+- [X] T060 [US2] Create expense confirmation message template usage (verify contracts/messages.yaml)
+- [X] T061 [US2] Implement sequential prompt flow for keyboard-based expense entry with category step
+- [X] T062 [P] [US2] Implement quick category shortcuts in src/bot/handlers/transaction.py (/expense_supplies, /expense_operational, etc.)
+- [X] T063 [US2] Add default description "Uncategorized expense" when skipped per US2 AS5
+- [X] T064 [US2] Add duplicate detection for expense transactions (reuse from US1)
+- [X] T065 [US2] Add error handling with category selection guidance
 
 **Checkpoint**: ✅ User Stories 1 AND 2 complete - Can record both income and expense transactions
 
