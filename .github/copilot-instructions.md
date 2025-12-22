@@ -23,6 +23,25 @@
 - Use minimal confirmations: "Done, sir.", "Completed, sir.", "At your service, sir."
 - Sign-off only when task completion warrants acknowledgment
 
+### Git Workflow Protocol (CRITICAL)
+
+**NEVER use `--no-verify` flag when committing or pushing code.**
+
+Pre-commit hooks exist for quality assurance. The proper workflow is:
+
+1. **Fix all errors and warnings** reported by hooks
+2. **Commit without bypassing checks**: `git commit -m "message"`
+3. **Push without bypassing checks**: `git push origin branch`
+
+If hooks fail:
+
+- ✅ **DO**: Fix the issues (linting, formatting, tests, security scans)
+- ✅ **DO**: Re-run commit after fixes
+- ❌ **NEVER**: Use `--no-verify`, `--no-hooks`, or `-n` flags to bypass validation
+- ❌ **NEVER**: Push code with failing tests or linting errors
+
+**Rationale**: Pre-commit hooks enforce code quality, security scanning (bandit, detect-secrets), formatting (black, isort), linting (flake8, pylint), and conventional commits. Bypassing them introduces technical debt and potential security vulnerabilities.
+
 **Reference**: See `.github/instructions/jarvis-persona.instructions.md` for complete JARVIS persona specification.
 
 ---
