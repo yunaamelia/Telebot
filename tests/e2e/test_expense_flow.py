@@ -89,9 +89,9 @@ def sample_user():
         user_id=1,
         telegram_id=123456789,
         telegram_username="testuser",
-        full_name="Test User",
+        display_name="Test User",
         role="staff",
-        status="active",
+        status="approved",
     )
 
 
@@ -133,9 +133,11 @@ class TestExpenseCommandE2E:
         # Arrange
         mock_telegram_update.message.text = "/expense 250000 Office supplies"
 
-        with patch("bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user):
+        with patch(
+            "src.bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user
+        ):
             with patch(
-                "bot.handlers.transaction.get_expense_categories",
+                "src.bot.handlers.transaction.get_expense_categories",
                 return_value=expense_categories,
             ):
                 # Act
@@ -171,10 +173,14 @@ class TestExpenseCommandE2E:
         }
         mock_transaction_service.record_expense.return_value = sample_transaction
 
-        with patch("bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user):
-            with patch("bot.handlers.transaction.transaction_service", mock_transaction_service):
+        with patch(
+            "src.bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user
+        ):
+            with patch(
+                "src.bot.handlers.transaction.transaction_service", mock_transaction_service
+            ):
                 with patch(
-                    "bot.handlers.transaction.get_category_by_id",
+                    "src.bot.handlers.transaction.get_category_by_id",
                     return_value=Category(
                         category_id=4,
                         name="Supplies",
@@ -213,10 +219,14 @@ class TestExpenseCommandE2E:
         }
         mock_transaction_service.record_expense.return_value = sample_transaction
 
-        with patch("bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user):
-            with patch("bot.handlers.transaction.transaction_service", mock_transaction_service):
+        with patch(
+            "src.bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user
+        ):
+            with patch(
+                "src.bot.handlers.transaction.transaction_service", mock_transaction_service
+            ):
                 with patch(
-                    "bot.handlers.transaction.get_category_by_id",
+                    "src.bot.handlers.transaction.get_category_by_id",
                     return_value=Category(
                         category_id=4,
                         name="Supplies",
@@ -260,10 +270,10 @@ class TestExpenseCommandE2E:
         mock_transaction_service.record_expense.return_value = sample_transaction
 
         with patch(
-            "bot.handlers.transaction.get_user_by_telegram_id",
+            "src.bot.handlers.transaction.get_user_by_telegram_id",
             return_value=sample_user,
         ), patch(
-            "bot.handlers.transaction.transaction_service",
+            "src.bot.handlers.transaction.transaction_service",
             mock_transaction_service,
         ):
             # Act
@@ -301,11 +311,11 @@ class TestExpenseCommandE2E:
             mock_transaction_service.record_expense.return_value = sample_transaction
 
             with patch(
-                "bot.handlers.transaction.get_user_by_telegram_id",
+                "src.bot.handlers.transaction.get_user_by_telegram_id",
                 return_value=sample_user,
             ):
                 with patch(
-                    "bot.handlers.transaction.transaction_service",
+                    "src.bot.handlers.transaction.transaction_service",
                     mock_transaction_service,
                 ):
                     # Act
@@ -329,8 +339,12 @@ class TestExpenseCommandE2E:
         mock_telegram_update.message.text = "/expense 100000"  # No description
         mock_transaction_service.record_expense.return_value = sample_transaction
 
-        with patch("bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user):
-            with patch("bot.handlers.transaction.transaction_service", mock_transaction_service):
+        with patch(
+            "src.bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user
+        ):
+            with patch(
+                "src.bot.handlers.transaction.transaction_service", mock_transaction_service
+            ):
                 # Act
                 await expense_command_handler(mock_telegram_update, mock_context)
 
@@ -347,7 +361,9 @@ class TestExpenseCommandE2E:
         # Arrange
         mock_telegram_update.message.text = "/expense abc Invalid amount"
 
-        with patch("bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user):
+        with patch(
+            "src.bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user
+        ):
             # Act
             await expense_command_handler(mock_telegram_update, mock_context)
 
@@ -368,7 +384,9 @@ class TestExpenseCommandE2E:
         # Arrange
         mock_telegram_update.message.text = "/expense 10000000001 Too large"
 
-        with patch("bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user):
+        with patch(
+            "src.bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user
+        ):
             # Act
             await expense_command_handler(mock_telegram_update, mock_context)
 
@@ -393,7 +411,7 @@ class TestExpenseCommandE2E:
         )
 
         with patch(
-            "bot.handlers.transaction.get_user_by_telegram_id",
+            "src.bot.handlers.transaction.get_user_by_telegram_id",
             return_value=unauthorized_user,
         ):
             # Act
@@ -424,8 +442,12 @@ class TestExpenseCommandE2E:
         # Mock duplicate detection
         mock_transaction_service.check_duplicate_expense.return_value = [sample_transaction]
 
-        with patch("bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user):
-            with patch("bot.handlers.transaction.transaction_service", mock_transaction_service):
+        with patch(
+            "src.bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user
+        ):
+            with patch(
+                "src.bot.handlers.transaction.transaction_service", mock_transaction_service
+            ):
                 # Act
                 await expense_command_handler(mock_telegram_update, mock_context)
 
@@ -454,7 +476,9 @@ class TestExpenseCommandE2E:
         mock_update.message.text = "/expense"
         mock_update.message.reply_text = AsyncMock()
 
-        with patch("bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user):
+        with patch(
+            "src.bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user
+        ):
             # Act
             await expense_command_handler(mock_update, mock_context)
 
@@ -480,10 +504,14 @@ class TestExpenseCommandE2E:
         }
         mock_transaction_service.record_expense.return_value = sample_transaction
 
-        with patch("bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user):
-            with patch("bot.handlers.transaction.transaction_service", mock_transaction_service):
+        with patch(
+            "src.bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user
+        ):
+            with patch(
+                "src.bot.handlers.transaction.transaction_service", mock_transaction_service
+            ):
                 with patch(
-                    "bot.handlers.transaction.get_category_by_id",
+                    "src.bot.handlers.transaction.get_category_by_id",
                     return_value=Category(
                         category_id=4,
                         name="Supplies",

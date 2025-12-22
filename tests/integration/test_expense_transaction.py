@@ -8,6 +8,7 @@ from datetime import datetime
 from decimal import Decimal
 
 import pytest
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
@@ -65,9 +66,9 @@ async def test_user(db_session):
     user = User(
         telegram_id=123456789,
         telegram_username="testuser",
-        full_name="Test User",
+        display_name="Test User",
         role="staff",
-        status="active",
+        status="approved",
     )
     db_session.add(user)
     await db_session.commit()
@@ -110,11 +111,9 @@ def category_repository(db_session):
 
 
 @pytest.fixture
-def transaction_service(transaction_repository, category_repository):
+def transaction_service(transaction_repository):
     """Create transaction service with real repositories."""
-    return TransactionService(
-        repository=transaction_repository, category_repository=category_repository
-    )
+    return TransactionService(repository=transaction_repository)
 
 
 class TestExpenseTransactionIntegration:
@@ -127,14 +126,14 @@ class TestExpenseTransactionIntegration:
         """Should persist expense transaction to database with correct fields."""
         # Arrange
         amount = Decimal("250000")
-        category_name = "Supplies"
+        category_id = 4  # Supplies
         description = "Office supplies purchase"
 
         # Act
         result = await transaction_service.record_expense(
             user=test_user,
             amount=amount,
-            category_name=category_name,
+            category_id=category_id,
             description=description,
         )
 
@@ -159,19 +158,19 @@ class TestExpenseTransactionIntegration:
         """Should successfully persist expenses for all category types."""
         # Test data for each category
         test_cases = [
-            ("Operational", Decimal("500000"), "Office rent payment"),
-            ("Salaries", Decimal("1000000"), "Monthly staff salaries"),
-            ("Supplies", Decimal("150000"), "Paper and ink cartridges"),
-            ("Marketing", Decimal("300000"), "Facebook advertising campaign"),
-            ("Other", Decimal("75000"), "Miscellaneous expenses"),
+            (2, Decimal("500000"), "Office rent payment"),  # Operational
+            (3, Decimal("1000000"), "Monthly staff salaries"),  # Salaries
+            (4, Decimal("150000"), "Paper and ink cartridges"),  # Supplies
+            (5, Decimal("300000"), "Facebook advertising campaign"),  # Marketing
+            (6, Decimal("75000"), "Miscellaneous expenses"),  # Other
         ]
 
-        for category_name, amount, description in test_cases:
+        for category_id, amount, description in test_cases:
             # Act
             result = await transaction_service.record_expense(
                 user=test_user,
                 amount=amount,
-                category_name=category_name,
+                category_id=category_id,
                 description=description,
             )
 
@@ -191,11 +190,11 @@ class TestExpenseTransactionIntegration:
         """Should use 'Uncategorized expense' when description is None per US2 AS5."""
         # Arrange
         amount = Decimal("100000")
-        category_name = "Other"
+        category_id = 6  # Other
 
         # Act
         result = await transaction_service.record_expense(
-            user=test_user, amount=amount, category_name=category_name, description=None
+            user=test_user, amount=amount, category_id=category_id, description=None
         )
 
         # Assert
@@ -212,13 +211,13 @@ class TestExpenseTransactionIntegration:
         """Should generate transaction ID in TX20251218001 format per FR-004."""
         # Arrange
         amount = Decimal("200000")
-        category_name = "Supplies"
+        category_id = 4  # Supplies
 
         # Act
         result = await transaction_service.record_expense(
             user=test_user,
             amount=amount,
-            category_name=category_name,
+            category_id=category_id,
             description="Test transaction",
         )
 
@@ -243,13 +242,13 @@ class TestExpenseTransactionIntegration:
         """Should correctly link transaction to user and category via foreign keys."""
         # Arrange
         amount = Decimal("150000")
-        category_name = "Marketing"
+        category_id = 5  # Marketing
 
         # Act
         result = await transaction_service.record_expense(
             user=test_user,
             amount=amount,
-            category_name=category_name,
+            category_id=category_id,
             description="Campaign expenses",
         )
 
@@ -272,13 +271,13 @@ class TestExpenseTransactionIntegration:
         """Should detect duplicate expense within 60-second window using database query."""
         # Arrange - Create first transaction
         amount = Decimal("100000")
-        category_name = "Supplies"
+        category_id = 4  # Supplies
         description = "Duplicate test"
 
         first_transaction = await transaction_service.record_expense(
             user=test_user,
             amount=amount,
-            category_name=category_name,
+            category_id=category_id,
             description=description,
         )
 
@@ -302,13 +301,13 @@ class TestExpenseTransactionIntegration:
         """Should store timestamp in UTC per data-model.md."""
         # Arrange
         amount = Decimal("100000")
-        category_name = "Other"
+        category_id = 6  # Other
 
         # Act
         result = await transaction_service.record_expense(
             user=test_user,
             amount=amount,
-            category_name=category_name,
+            category_id=category_id,
             description="Timezone test",
         )
 
@@ -326,13 +325,13 @@ class TestExpenseTransactionIntegration:
         """Should compute transaction_date from timestamp in WITA timezone."""
         # Arrange
         amount = Decimal("100000")
-        category_name = "Supplies"
+        category_id = 4  # Supplies
 
         # Act
         result = await transaction_service.record_expense(
             user=test_user,
             amount=amount,
-            category_name=category_name,
+            category_id=category_id,
             description="Date test",
         )
 
@@ -351,13 +350,13 @@ class TestExpenseTransactionIntegration:
         """Should set transaction status to 'recorded' by default."""
         # Arrange
         amount = Decimal("100000")
-        category_name = "Other"
+        category_id = 6  # Other
 
         # Act
         result = await transaction_service.record_expense(
             user=test_user,
             amount=amount,
-            category_name=category_name,
+            category_id=category_id,
             description="Status test",
         )
 
@@ -375,14 +374,14 @@ class TestExpenseTransactionIntegration:
         """Should raise ValueError for non-existent category."""
         # Arrange
         amount = Decimal("100000")
-        invalid_category = "NonExistentCategory"
+        invalid_category_id = 999
 
         # Act & Assert
-        with pytest.raises(ValueError, match="Category not found"):
+        with pytest.raises(IntegrityError):
             await transaction_service.record_expense(
                 user=test_user,
                 amount=amount,
-                category_name=invalid_category,
+                category_id=invalid_category_id,
                 description="Test",
             )
 
@@ -395,9 +394,9 @@ class TestExpenseTransactionIntegration:
         user2 = User(
             telegram_id=987654321,
             telegram_username="testuser2",
-            full_name="Test User 2",
+            display_name="Test User 2",
             role="staff",
-            status="active",
+            status="approved",
         )
         db_session.add(user2)
         await db_session.commit()
@@ -407,14 +406,14 @@ class TestExpenseTransactionIntegration:
         expense1 = await transaction_service.record_expense(
             user=test_user,
             amount=Decimal("100000"),
-            category_name="Supplies",
+            category_id=4,
             description="User 1 expense",
         )
 
         expense2 = await transaction_service.record_expense(
             user=user2,
             amount=Decimal("200000"),
-            category_name="Supplies",
+            category_id=4,
             description="User 2 expense",
         )
 

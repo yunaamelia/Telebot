@@ -66,9 +66,9 @@ def sample_user():
         user_id=1,
         telegram_id=123456789,
         telegram_username="testuser",
-        full_name="Test User",
+        display_name="Test User",
         role="staff",
-        status="active",
+        status="approved",
     )
 
 
@@ -105,8 +105,8 @@ class TestIncomeCommandE2E:
         mock_transaction_service.record_income.return_value = sample_transaction
 
         with patch(
-            "bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user
-        ), patch("bot.handlers.transaction.transaction_service", mock_transaction_service):
+            "src.bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user
+        ), patch("src.bot.handlers.transaction.transaction_service", mock_transaction_service):
             # Act
             await income_command_handler(mock_telegram_update, mock_context)
 
@@ -157,7 +157,9 @@ class TestIncomeCommandE2E:
         # Arrange
         mock_telegram_update.message.text = "/income abc123 Test"
 
-        with patch("bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user):
+        with patch(
+            "src.bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user
+        ):
             # Act
             await income_command_handler(mock_telegram_update, mock_context)
 
@@ -175,7 +177,7 @@ class TestIncomeCommandE2E:
         # Arrange
         mock_telegram_update.message.text = "/income 500000 Test"
 
-        with patch("bot.handlers.transaction.get_user_by_telegram_id", return_value=None):
+        with patch("src.bot.handlers.transaction.get_user_by_telegram_id", return_value=None):
             # Act
             await income_command_handler(mock_telegram_update, mock_context)
 
@@ -197,8 +199,8 @@ class TestIncomeCommandE2E:
         mock_transaction_service.record_income.return_value = sample_transaction
 
         with patch(
-            "bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user
-        ), patch("bot.handlers.transaction.transaction_service", mock_transaction_service):
+            "src.bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user
+        ), patch("src.bot.handlers.transaction.transaction_service", mock_transaction_service):
             # Step 1: Start command
             mock_telegram_update.message.text = "/income"
             state = await income_command_handler(mock_telegram_update, mock_context)
@@ -238,8 +240,8 @@ class TestIncomeCommandE2E:
         mock_transaction_service.record_income.return_value = sample_transaction
 
         with patch(
-            "bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user
-        ), patch("bot.handlers.transaction.transaction_service", mock_transaction_service):
+            "src.bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user
+        ), patch("src.bot.handlers.transaction.transaction_service", mock_transaction_service):
             # Act
             await income_command_handler(mock_telegram_update, mock_context)
 
@@ -263,8 +265,8 @@ class TestIncomeCommandE2E:
         mock_transaction_service.record_income.return_value = sample_transaction
 
         with patch(
-            "bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user
-        ), patch("bot.handlers.transaction.transaction_service", mock_transaction_service):
+            "src.bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user
+        ), patch("src.bot.handlers.transaction.transaction_service", mock_transaction_service):
             # Act
             await income_command_handler(mock_telegram_update, mock_context)
 
@@ -288,8 +290,8 @@ class TestIncomeCommandE2E:
         mock_transaction_service.record_income.return_value = sample_transaction
 
         with patch(
-            "bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user
-        ), patch("bot.handlers.transaction.transaction_service", mock_transaction_service):
+            "src.bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user
+        ), patch("src.bot.handlers.transaction.transaction_service", mock_transaction_service):
             # Act
             await income_command_handler(mock_telegram_update, mock_context)
 
@@ -319,8 +321,8 @@ class TestIncomeCommandE2E:
         mock_transaction_service.record_income.return_value = sample_transaction
 
         with patch(
-            "bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user
-        ), patch("bot.handlers.transaction.transaction_service", mock_transaction_service):
+            "src.bot.handlers.transaction.get_user_by_telegram_id", return_value=sample_user
+        ), patch("src.bot.handlers.transaction.transaction_service", mock_transaction_service):
             # Step 1: Start command
             mock_telegram_update.message.text = "/income"
             await income_command_handler(mock_telegram_update, mock_context)

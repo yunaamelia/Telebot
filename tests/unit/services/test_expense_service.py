@@ -40,11 +40,10 @@ def mock_category_repository():
 
 
 @pytest.fixture
-def transaction_service(mock_transaction_repository, mock_category_repository):
-    """Create transaction service with mocked repositories."""
+def transaction_service(mock_transaction_repository):
+    """Create transaction service with mocked repository."""
     return TransactionService(
         repository=mock_transaction_repository,
-        category_repository=mock_category_repository,
     )
 
 
@@ -55,9 +54,9 @@ def sample_user():
         user_id=1,
         telegram_id=123456789,
         telegram_username="testuser",
-        full_name="Test User",
+        display_name="Test User",
         role="staff",
-        status="active",
+        status="approved",
     )
 
 
@@ -74,32 +73,30 @@ def expense_categories():
 
 
 class TestRecordExpense:
-    """Test expense transaction recording with category selection."""
+    """Test expense transaction recording (ID-based)."""
 
     @pytest.mark.asyncio
     async def test_record_expense_with_valid_category(
         self,
         transaction_service,
         mock_transaction_repository,
-        mock_category_repository,
         sample_user,
         expense_categories,
     ):
-        """Should successfully record expense with valid category name."""
+        """Should successfully record expense with valid category ID."""
         # Arrange
         amount = Decimal("250000")
         description = "Office supplies purchase"
-        category_name = "Supplies"
-
-        supplies_category = expense_categories[2]  # Supplies category
-        mock_category_repository.get_by_name.return_value = supplies_category
+        # Use existing category object from fixture
+        supplies_category = expense_categories[2]  # Supplies (ID 4)
+        category_id = supplies_category.category_id
 
         expected_transaction = Transaction(
             transaction_id="TX20251218001",
             user_id=sample_user.user_id,
             type="expense",
             amount=amount,
-            category_id=supplies_category.category_id,
+            category_id=category_id,
             description=description,
             timestamp=datetime.now(),
             status="recorded",
@@ -110,7 +107,7 @@ class TestRecordExpense:
         result = await transaction_service.record_expense(
             user=sample_user,
             amount=amount,
-            category_name=category_name,
+            category_id=category_id,
             description=description,
         )
 
@@ -118,9 +115,8 @@ class TestRecordExpense:
         assert result.type == "expense"
         assert result.amount == amount
         assert result.description == description
-        assert result.category_id == supplies_category.category_id
+        assert result.category_id == category_id
         assert result.user_id == sample_user.user_id
-        mock_category_repository.get_by_name.assert_called_once_with(category_name)
         mock_transaction_repository.create.assert_called_once()
 
     @pytest.mark.asyncio
@@ -128,24 +124,21 @@ class TestRecordExpense:
         self,
         transaction_service,
         mock_transaction_repository,
-        mock_category_repository,
         sample_user,
         expense_categories,
     ):
         """Should use 'Uncategorized expense' as default description per US2 AS5."""
         # Arrange
         amount = Decimal("100000")
-        category_name = "Other"
-
-        other_category = expense_categories[4]  # Other category
-        mock_category_repository.get_by_name.return_value = other_category
+        other_category = expense_categories[4]  # Other (ID 6)
+        category_id = other_category.category_id
 
         expected_transaction = Transaction(
             transaction_id="TX20251218001",
             user_id=sample_user.user_id,
             type="expense",
             amount=amount,
-            category_id=other_category.category_id,
+            category_id=category_id,
             description="Uncategorized expense",
             timestamp=datetime.now(),
             status="recorded",
@@ -156,7 +149,7 @@ class TestRecordExpense:
         result = await transaction_service.record_expense(
             user=sample_user,
             amount=amount,
-            category_name=category_name,
+            category_id=category_id,
             description=None,  # No description provided
         )
 
@@ -169,24 +162,22 @@ class TestRecordExpense:
         self,
         transaction_service,
         mock_transaction_repository,
-        mock_category_repository,
         sample_user,
         expense_categories,
     ):
         """Should successfully record expenses for all category types."""
         # Test all expense categories: Operational, Salaries, Supplies, Marketing, Other
         category_tests = [
-            ("Operational", expense_categories[0], "Office rent"),
-            ("Salaries", expense_categories[1], "Monthly salaries"),
-            ("Supplies", expense_categories[2], "Office supplies"),
-            ("Marketing", expense_categories[3], "Facebook ads"),
-            ("Other", expense_categories[4], "Miscellaneous"),
+            (expense_categories[0], "Office rent"),
+            (expense_categories[1], "Monthly salaries"),
+            (expense_categories[2], "Office supplies"),
+            (expense_categories[3], "Facebook ads"),
+            (expense_categories[4], "Miscellaneous"),
         ]
 
-        for category_name, category_obj, description in category_tests:
+        for category_obj, description in category_tests:
             # Arrange
             amount = Decimal("500000")
-            mock_category_repository.get_by_name.return_value = category_obj
 
             expected_transaction = Transaction(
                 transaction_id="TX20251218001",
@@ -204,7 +195,7 @@ class TestRecordExpense:
             result = await transaction_service.record_expense(
                 user=sample_user,
                 amount=amount,
-                category_name=category_name,
+                category_id=category_obj.category_id,
                 description=description,
             )
 
@@ -218,14 +209,14 @@ class TestRecordExpense:
         """Should raise AmountValidationError for zero amount."""
         # Arrange
         amount = Decimal("0")
-        category_name = "Supplies"
+        category_id = 4  # Valid ID
 
         # Act & Assert
         with pytest.raises(AmountValidationError, match="Amount must be greater than 0"):
             await transaction_service.record_expense(
                 user=sample_user,
                 amount=amount,
-                category_name=category_name,
+                category_id=category_id,
                 description="Test",
             )
 
@@ -234,14 +225,14 @@ class TestRecordExpense:
         """Should raise AmountValidationError for negative amount."""
         # Arrange
         amount = Decimal("-100000")
-        category_name = "Supplies"
+        category_id = 4
 
         # Act & Assert
         with pytest.raises(AmountValidationError, match="Amount must be greater than 0"):
             await transaction_service.record_expense(
                 user=sample_user,
                 amount=amount,
-                category_name=category_name,
+                category_id=category_id,
                 description="Test",
             )
 
@@ -250,33 +241,30 @@ class TestRecordExpense:
         """Should raise AmountValidationError when amount exceeds Rp 10 billion per FR-022."""
         # Arrange
         amount = Decimal("10000000001")  # 10 billion + 1
-        category_name = "Supplies"
+        category_id = 4
 
         # Act & Assert
-        with pytest.raises(AmountValidationError, match="Amount exceeds maximum limit"):
+        with pytest.raises(AmountValidationError, match="Amount exceeds maximum.*"):
             await transaction_service.record_expense(
                 user=sample_user,
                 amount=amount,
-                category_name=category_name,
+                category_id=category_id,
                 description="Test",
             )
 
     @pytest.mark.asyncio
-    async def test_record_expense_invalid_category(
-        self, transaction_service, mock_category_repository, sample_user
-    ):
-        """Should raise ValueError for invalid/non-existent category."""
+    async def test_record_expense_income_category_id(self, transaction_service, sample_user):
+        """Should raise ValueError if income category ID is used for expense."""
         # Arrange
         amount = Decimal("100000")
-        invalid_category = "InvalidCategory"
-        mock_category_repository.get_by_name.return_value = None
+        income_category_id = 1  # Known income ID
 
         # Act & Assert
-        with pytest.raises(ValueError, match="Category not found"):
+        with pytest.raises(ValueError, match="Cannot use income category"):
             await transaction_service.record_expense(
                 user=sample_user,
                 amount=amount,
-                category_name=invalid_category,
+                category_id=income_category_id,
                 description="Test",
             )
 
@@ -285,7 +273,6 @@ class TestRecordExpense:
         self,
         transaction_service,
         mock_transaction_repository,
-        mock_category_repository,
         sample_user,
         expense_categories,
     ):
@@ -293,9 +280,7 @@ class TestRecordExpense:
         # Arrange
         amount = Decimal("150000")
         description = "Paper and ink"
-
         supplies_category = expense_categories[2]
-        mock_category_repository.get_by_name.return_value = supplies_category
 
         # Mock finding a duplicate transaction
         duplicate_transaction = Transaction(
@@ -329,18 +314,14 @@ class TestRecordExpense:
         self,
         transaction_service,
         mock_transaction_repository,
-        mock_category_repository,
         sample_user,
         expense_categories,
     ):
         """Should record expense with is_duplicate_confirmed=True when user confirms duplicate."""
         # Arrange
         amount = Decimal("150000")
-        category_name = "Supplies"
         description = "Paper and ink"
-
         supplies_category = expense_categories[2]
-        mock_category_repository.get_by_name.return_value = supplies_category
 
         expected_transaction = Transaction(
             transaction_id="TX20251218002",
@@ -359,7 +340,7 @@ class TestRecordExpense:
         result = await transaction_service.record_expense(
             user=sample_user,
             amount=amount,
-            category_name=category_name,
+            category_id=supplies_category.category_id,
             description=description,
             is_duplicate_confirmed=True,
         )
@@ -373,22 +354,26 @@ class TestRecordExpense:
         self,
         transaction_service,
         mock_transaction_repository,
-        mock_category_repository,
         sample_user,
         expense_categories,
     ):
         """Should generate transaction ID in TX20251218001 format per FR-004."""
         # Arrange
         amount = Decimal("100000")
-        category_name = "Other"
-
         other_category = expense_categories[4]
-        mock_category_repository.get_by_name.return_value = other_category
 
         mock_transaction_repository.get_daily_sequence.return_value = 5
 
-        with patch("bot.services.transaction_service.datetime") as mock_datetime:
-            mock_datetime.now.return_value = datetime(2025, 12, 18, 10, 30, 0)
+        # Mock WITA datetime function
+        mock_path = "src.bot.services.transaction_service.get_current_wita_datetime"
+        with patch(mock_path) as mock_time:
+            # We mock the UTILS function, not datetime directly
+            from datetime import datetime
+            import pytz
+
+            wita = pytz.timezone("Asia/Makassar")
+            mock_date = wita.localize(datetime(2025, 12, 18, 10, 30, 0))
+            mock_time.return_value = mock_date
 
             expected_transaction = Transaction(
                 transaction_id="TX20251218005",  # Sequence 5
@@ -397,7 +382,7 @@ class TestRecordExpense:
                 amount=amount,
                 category_id=other_category.category_id,
                 description="Test",
-                timestamp=datetime(2025, 12, 18, 10, 30, 0),
+                timestamp=mock_date,
                 status="recorded",
             )
             mock_transaction_repository.create.return_value = expected_transaction
@@ -406,7 +391,7 @@ class TestRecordExpense:
             result = await transaction_service.record_expense(
                 user=sample_user,
                 amount=amount,
-                category_name=category_name,
+                category_id=other_category.category_id,
                 description="Test",
             )
 

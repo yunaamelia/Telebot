@@ -3,6 +3,7 @@
 Following TDD: These tests are written FIRST and should FAIL until implementation.
 Tests scheduler timezone configuration, job scheduling, and WITA compliance.
 """
+from unittest.mock import ANY
 from unittest.mock import Mock
 from unittest.mock import patch
 
@@ -48,9 +49,13 @@ class TestDailyReportSchedulerConfiguration:
         # Verify it's a CronTrigger
         assert isinstance(job.trigger, CronTrigger)
 
-        # Verify scheduled for midnight
-        assert job.trigger.fields[0].expressions[0].step == 0  # hour=0
-        assert job.trigger.fields[1].expressions[0].step == 0  # minute=0
+        # Verify trigger parameters via string representation or public attributes
+        # cron[hour='0', minute='0', timezone='Asia/Makassar']
+        trigger_str = str(job.trigger)
+        assert "hour='0'" in trigger_str
+        assert "minute='0'" in trigger_str
+        # Timezone check might vary in string rep, checking attribute directly is safer for objects
+        assert job.trigger.timezone == pytz.timezone("Asia/Makassar")
 
     @pytest.mark.asyncio
     async def test_scheduler_calls_correct_job_function(self):
@@ -84,7 +89,7 @@ class TestDailyReportSchedulerConfiguration:
     async def test_scheduler_replaces_existing_job(self):
         """Should replace existing job if scheduler is reconfigured."""
         # Arrange
-        scheduler = AsyncIOScheduler()
+        scheduler = Mock()
         mock_report_job_1 = Mock()
         mock_report_job_2 = Mock()
 
@@ -93,9 +98,21 @@ class TestDailyReportSchedulerConfiguration:
         configure_daily_report_scheduler(scheduler, mock_report_job_2)
 
         # Assert
-        jobs = scheduler.get_jobs()
-        assert len(jobs) == 1  # Should only have one job
-        assert jobs[0].func == mock_report_job_2
+        # Verify add_job was called with replace_existing=True
+        # We can check the last call
+        scheduler.add_job.assert_called_with(
+            mock_report_job_2,
+            trigger=ANY,  # verifying arguments strictly might be verbose
+            id="daily_report_midnight_wita",
+            name="Daily Financial Report Generation",
+            replace_existing=True,
+            misfire_grace_time=300,
+        )
+        # Or simpler:
+        call_args = scheduler.add_job.call_args
+        assert call_args.kwargs["replace_existing"] is True
+        assert call_args.kwargs["id"] == "daily_report_midnight_wita"
+        assert call_args.args[0] == mock_report_job_2
 
     @pytest.mark.asyncio
     async def test_scheduler_handles_timezone_edge_case_23_59_59(self):
@@ -104,15 +121,20 @@ class TestDailyReportSchedulerConfiguration:
         scheduler = AsyncIOScheduler()
         mock_report_job = Mock()
 
+        # Use a real datetime class for mocking to avoid MagicMock tzinfo issues
+        from datetime import datetime
+
         with patch("src.scheduler.daily_report.datetime") as mock_datetime:
-            # Mock current time as 23:59:59 WITA
+            # Configure side_effect or return_value securely
+            # We want datetime.now(wita) to return a specific time
             wita = pytz.timezone("Asia/Makassar")
-            mock_datetime.now.return_value = wita.localize(mock_datetime(2025, 12, 22, 23, 59, 59))
+            mock_now = wita.localize(datetime(2025, 12, 22, 23, 59, 59))
+            mock_datetime.now.return_value = mock_now
+            # Ensure side effects don't break other datetime usage if any
 
             # Act
             configure_daily_report_scheduler(scheduler, mock_report_job)
 
             # Assert
             jobs = scheduler.get_jobs()
-            # Should be scheduled for next midnight, not immediately
             assert len(jobs) == 1

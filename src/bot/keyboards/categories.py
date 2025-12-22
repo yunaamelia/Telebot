@@ -36,7 +36,7 @@ def create_expense_category_keyboard(
     expense_categories = [cat for cat in categories if cat.type == "expense"]
     expense_categories.sort(key=lambda c: c.sort_order)
 
-    # Build keyboard rows (3 buttons per row)
+    # Build keyboard rows (2 buttons per row)
     keyboard = []
     row = []
 
@@ -48,8 +48,8 @@ def create_expense_category_keyboard(
         button = InlineKeyboardButton(text=button_text, callback_data=callback_data)
         row.append(button)
 
-        # Create new row after 3 buttons
-        if len(row) == 3:
+        # Create new row after 2 buttons
+        if len(row) == 2:
             keyboard.append(row)
             row = []
 

@@ -38,9 +38,9 @@ def sample_user():
         user_id=1,
         telegram_id=123456789,
         telegram_username="testuser",
-        full_name="Test User",
+        display_name="Test User",
         role="staff",
-        status="active",
+        status="approved",
     )
     return user
 
