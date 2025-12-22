@@ -164,6 +164,7 @@ When context files don't provide specific guidance:
 
 1. Identify similar files to the one being modified or created
 2. Analyze patterns for:
+
    - Naming conventions (snake_case for variables/functions, PascalCase for classes)
    - Code organization (handlers → services → repositories → models)
    - Error handling (try-except with specific exceptions, logging)
