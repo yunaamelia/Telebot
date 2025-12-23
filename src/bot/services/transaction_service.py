@@ -337,26 +337,10 @@ class TransactionService:
         transaction_date = current_time.date()
 
         # Get daily sequence number
-        sequence = await self.repository.get_daily_sequence(
-            user_id=user.user_id, transaction_date=transaction_date
-        )
+        sequence = await self.repository.get_daily_count(transaction_date)
 
         # Generate transaction ID
         transaction_id = generate_transaction_id(transaction_date, sequence)
-
-        # Create transaction object
-        transaction = Transaction(
-            transaction_id=transaction_id,
-            user_id=user.user_id,
-            type="expense",
-            amount=amount,
-            category_id=category_id,
-            description=description,
-            timestamp=current_time,
-            transaction_date=transaction_date,
-            status="completed",
-            is_duplicate_confirmed=is_duplicate_confirmed,
-        )
 
         # Persist to database
         try:

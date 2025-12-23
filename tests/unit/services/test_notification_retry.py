@@ -39,9 +39,10 @@ class TestNotificationServiceRetry:
         ]
 
         # Act
-        await notification_service.send_daily_report_with_retry(
-            chat_id=123, report_text="Test report"
-        )
+        with patch("asyncio.sleep"):
+            await notification_service.send_daily_report_with_retry(
+                chat_id=123, report_text="Test report"
+            )
 
         # Assert
         assert mock_bot.send_message.call_count == 2

@@ -26,7 +26,7 @@ def mock_transaction_repository():
     repository = Mock(spec=TransactionRepository)
     repository.create = AsyncMock()
     repository.find_duplicates = AsyncMock(return_value=[])
-    repository.get_daily_sequence = AsyncMock(return_value=1)
+    repository.get_daily_count = AsyncMock(return_value=1)
     return repository
 
 
@@ -362,7 +362,7 @@ class TestRecordExpense:
         amount = Decimal("100000")
         other_category = expense_categories[4]
 
-        mock_transaction_repository.get_daily_sequence.return_value = 5
+        mock_transaction_repository.get_daily_count.return_value = 5
 
         # Mock WITA datetime function
         mock_path = "src.bot.services.transaction_service.get_current_wita_datetime"

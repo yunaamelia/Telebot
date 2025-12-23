@@ -196,45 +196,6 @@ async def handle_daily_summary_callback(update: Update, context: ContextTypes.DE
             await query.answer("Error loading summary", show_alert=True)
 
 
-async def handle_transaction_history_callback(
-    update: Update, context: ContextTypes.DEFAULT_TYPE
-) -> None:
-    """Handle Transaction History button callback.
-
-    Shows placeholder message (US6 not yet implemented).
-
-    Args:
-        update: Telegram update with callback query
-        context: Bot context
-
-    Returns:
-        None
-    """
-    try:
-        query = update.callback_query
-        await query.answer()
-
-        message = (
-            "📋 <b>Transaction History</b>\n\n"
-            "Transaction history feature coming soon!\n\n"
-            "For now, use <code>/summary</code> to view today's transactions."
-        )
-
-        keyboard = create_main_menu_keyboard()
-
-        await query.message.reply_text(message, parse_mode=ParseMode.HTML, reply_markup=keyboard)
-
-        logger.info(
-            "Transaction history placeholder shown",
-            extra={"user_id": query.from_user.id},
-        )
-
-    except Exception as e:
-        logger.exception("Error in history callback", extra={"error": str(e)})
-        with contextlib.suppress(Exception):
-            await query.answer("Error", show_alert=True)
-
-
 async def handle_settings_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle Settings button callback.
 
@@ -298,3 +259,324 @@ async def handle_back_button_callback(update: Update, context: ContextTypes.DEFA
         logger.exception("Error in back button callback", extra={"error": str(e)})
         with contextlib.suppress(Exception):
             await query.answer("Error navigating back", show_alert=True)
+
+
+async def history_pagination_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle history pagination button clicks.
+
+    Parses callback data format: history_page_{page}_{filter_params}
+
+    Args:
+        update: Telegram update with callback query
+        context: Bot context
+    """
+    from datetime import timedelta
+    from src.bot.handlers.history import format_history_message, ITEMS_PER_PAGE
+    from src.bot.keyboards.main_menu import create_history_pagination_keyboard
+    from src.bot.repositories.transaction_repository import TransactionRepository
+    from src.bot.repositories.user_repository import UserRepository
+    from src.database.session import get_session
+
+    try:
+        query = update.callback_query
+        await query.answer()
+
+        # Parse callback data: history_page_{page}_{filters}
+        callback_parts = query.data.split("_")
+        page = int(callback_parts[2])
+        filter_str = "_".join(callback_parts[3:]) if len(callback_parts) > 3 else "all"
+
+        logger.info(
+            "History pagination",
+            extra={"user_id": query.from_user.id, "page": page, "filters": filter_str},
+        )
+
+        async with get_session() as session:
+            # Get user
+            user_repo = UserRepository(session)
+            db_user = await user_repo.get_by_telegram_id(query.from_user.id)
+
+            if not db_user:
+                await query.answer("User not found", show_alert=True)
+                return
+
+            # Retrieve transactions
+            tx_repo = TransactionRepository(session)
+            offset = (page - 1) * ITEMS_PER_PAGE
+
+            # Parse filters from filter_str
+            date_filter = None
+            category_filter = None
+            type_filter = None
+
+            if filter_str != "all":
+                # Parse filter parameters
+                for param in filter_str.split("_"):
+                    if param.startswith("date_"):
+                        from datetime import datetime
+
+                        date_filter = datetime.strptime(param[5:], "%Y-%m-%d").date()
+                    elif param.startswith("cat_"):
+                        category_filter = int(param[4:])
+                    elif param.startswith("type_"):
+                        type_filter = param[5:]
+
+            # Get transactions based on filters
+            if date_filter or category_filter or type_filter:
+                # Use filtered query
+                start_date = (
+                    date_filter if date_filter else (datetime.now().date() - timedelta(days=365))
+                )
+                end_date = date_filter if date_filter else datetime.now().date()
+
+                all_txs = await tx_repo.get_by_date_range(
+                    start_date=start_date,
+                    end_date=end_date,
+                    user_id=db_user.user_id,
+                    category_id=category_filter,
+                    transaction_type=type_filter,
+                )
+                total_count = len(all_txs)
+                transactions = all_txs[offset : offset + ITEMS_PER_PAGE]
+            else:
+                # Get paginated history
+                transactions, total_count = await tx_repo.get_history(
+                    user_id=db_user.user_id, limit=ITEMS_PER_PAGE, offset=offset
+                )
+
+            # Calculate pagination
+            total_pages = max(1, (total_count + ITEMS_PER_PAGE - 1) // ITEMS_PER_PAGE)
+
+            # Format message
+            filter_description = "All transactions"
+            if date_filter:
+                filter_description = f"Date: {date_filter.strftime('%d %b %Y')}"
+            elif type_filter:
+                filter_description = f"Type: {type_filter.capitalize()}"
+
+            message = format_history_message(
+                transactions=transactions,
+                current_page=page,
+                total_pages=total_pages,
+                total_count=total_count,
+                filter_description=filter_description,
+            )
+
+            # Create keyboard
+            keyboard = create_history_pagination_keyboard(
+                current_page=page,
+                total_pages=total_pages,
+                user_id=db_user.user_id,
+                date_filter=date_filter,
+                category_filter=category_filter,
+                type_filter=type_filter,
+            )
+
+            # Update message
+            await query.edit_message_text(message, parse_mode=ParseMode.HTML, reply_markup=keyboard)
+
+    except Exception as e:
+        logger.exception("Error in history pagination", extra={"error": str(e)})
+        with contextlib.suppress(Exception):
+            await query.answer("Error loading page", show_alert=True)
+
+
+async def history_filter_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle history filter button clicks.
+
+    Parses callback data format: history_filter_{filter_type}_{page}
+
+    Args:
+        update: Telegram update with callback query
+        context: Bot context
+    """
+    from datetime import datetime, timedelta
+    from src.bot.handlers.history import format_history_message, ITEMS_PER_PAGE
+    from src.bot.keyboards.main_menu import (
+        create_history_pagination_keyboard,
+        create_history_filter_keyboard,
+    )
+    from src.bot.repositories.transaction_repository import TransactionRepository
+    from src.bot.repositories.user_repository import UserRepository
+    from src.database.session import get_session
+
+    try:
+        query = update.callback_query
+        await query.answer()
+
+        # Parse callback data: history_filter_{type}_{page} or history_show_filters_{page}
+        callback_parts = query.data.split("_")
+
+        # Check if showing filter menu
+        if "show" in callback_parts:
+            page = int(callback_parts[3])
+            keyboard = create_history_filter_keyboard(current_page=page)
+            await query.edit_message_reply_markup(reply_markup=keyboard)
+            return
+
+        filter_type = callback_parts[2]
+        page = int(callback_parts[3])
+
+        logger.info(
+            "History filter applied",
+            extra={"user_id": query.from_user.id, "filter": filter_type, "page": page},
+        )
+
+        async with get_session() as session:
+            # Get user
+            user_repo = UserRepository(session)
+            db_user = await user_repo.get_by_telegram_id(query.from_user.id)
+
+            if not db_user:
+                await query.answer("User not found", show_alert=True)
+                return
+
+            # Determine filter parameters
+            tx_repo = TransactionRepository(session)
+            today = datetime.now().date()
+
+            date_filter = None
+            type_filter = None
+            filter_description = "All transactions"
+
+            if filter_type == "today":
+                date_filter = today
+                filter_description = f"Today ({today.strftime('%d %b %Y')})"
+            elif filter_type == "week":
+                start_date = today - timedelta(days=7)
+                transactions = await tx_repo.get_by_date_range(
+                    start_date=start_date, end_date=today, user_id=db_user.user_id
+                )
+                total_count = len(transactions)
+                transactions = transactions[:ITEMS_PER_PAGE]
+                filter_description = "Last 7 days"
+            elif filter_type == "month":
+                start_date = today - timedelta(days=30)
+                transactions = await tx_repo.get_by_date_range(
+                    start_date=start_date, end_date=today, user_id=db_user.user_id
+                )
+                total_count = len(transactions)
+                transactions = transactions[:ITEMS_PER_PAGE]
+                filter_description = "Last 30 days"
+            elif filter_type == "income":
+                type_filter = "income"
+                filter_description = "Income Only"
+            elif filter_type == "expense":
+                type_filter = "expense"
+                filter_description = "Expense Only"
+            else:  # "all"
+                pass
+
+            # Get transactions if not already retrieved
+            if filter_type in ["today", "income", "expense", "all"]:
+                if date_filter or type_filter:
+                    start_date = date_filter if date_filter else (today - timedelta(days=365))
+                    end_date = date_filter if date_filter else today
+
+                    transactions = await tx_repo.get_by_date_range(
+                        start_date=start_date,
+                        end_date=end_date,
+                        user_id=db_user.user_id,
+                        transaction_type=type_filter,
+                    )
+                    total_count = len(transactions)
+                    transactions = transactions[:ITEMS_PER_PAGE]
+                else:
+                    transactions, total_count = await tx_repo.get_history(
+                        user_id=db_user.user_id, limit=ITEMS_PER_PAGE, offset=0
+                    )
+
+            # Calculate pagination
+            total_pages = max(1, (total_count + ITEMS_PER_PAGE - 1) // ITEMS_PER_PAGE)
+
+            # Format message
+            message = format_history_message(
+                transactions=transactions,
+                current_page=1,  # Reset to page 1 when filter changes
+                total_pages=total_pages,
+                total_count=total_count,
+                filter_description=filter_description,
+            )
+
+            # Create keyboard
+            keyboard = create_history_pagination_keyboard(
+                current_page=1,
+                total_pages=total_pages,
+                user_id=db_user.user_id,
+                date_filter=date_filter,
+                type_filter=type_filter,
+            )
+
+            # Update message
+            await query.edit_message_text(message, parse_mode=ParseMode.HTML, reply_markup=keyboard)
+
+    except Exception as e:
+        logger.exception("Error in history filter", extra={"error": str(e)})
+        with contextlib.suppress(Exception):
+            await query.answer("Error applying filter", show_alert=True)
+
+
+async def handle_transaction_history_callback(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> None:
+    """Handle Transaction History button callback from main menu.
+
+    Displays transaction history with pagination.
+
+    Args:
+        update: Telegram update with callback query
+        context: Bot context
+    """
+    from src.bot.handlers.history import format_history_message, ITEMS_PER_PAGE
+    from src.bot.keyboards.main_menu import create_history_pagination_keyboard
+    from src.bot.repositories.transaction_repository import TransactionRepository
+    from src.bot.repositories.user_repository import UserRepository
+    from src.database.session import get_session
+
+    try:
+        query = update.callback_query
+        await query.answer()
+
+        logger.info("Transaction history callback", extra={"user_id": query.from_user.id})
+
+        async with get_session() as session:
+            # Get user
+            user_repo = UserRepository(session)
+            db_user = await user_repo.get_by_telegram_id(query.from_user.id)
+
+            if not db_user or db_user.status != "approved":
+                await query.answer("Not authorized", show_alert=True)
+                return
+
+            # Get transactions
+            tx_repo = TransactionRepository(session)
+            transactions, total_count = await tx_repo.get_history(
+                user_id=db_user.user_id, limit=ITEMS_PER_PAGE, offset=0
+            )
+
+            # Calculate pagination
+            total_pages = max(1, (total_count + ITEMS_PER_PAGE - 1) // ITEMS_PER_PAGE)
+
+            # Format message
+            message = format_history_message(
+                transactions=transactions,
+                current_page=1,
+                total_pages=total_pages,
+                total_count=total_count,
+                filter_description="All transactions",
+            )
+
+            # Create keyboard
+            keyboard = create_history_pagination_keyboard(
+                current_page=1, total_pages=total_pages, user_id=db_user.user_id
+            )
+
+            # Send or edit message
+            await query.message.reply_text(
+                message, parse_mode=ParseMode.HTML, reply_markup=keyboard
+            )
+
+    except Exception as e:
+        logger.exception("Error in transaction history callback", extra={"error": str(e)})
+        with contextlib.suppress(Exception):
+            await query.answer("Error loading history", show_alert=True)

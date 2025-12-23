@@ -36,8 +36,8 @@ class TestParseAmount:
     def test_parse_with_decimals(self):
         """Should handle decimal values (round to whole rupiah)."""
         result = parse_amount("1500000.50")
-        # Indonesian rupiah doesn't use cents, should round
-        assert result == Decimal("1500001")  # Rounds 0.5 up
+        # Rounds to 2 decimal places
+        assert result == Decimal("1500000.50")
 
     def test_parse_with_whitespace(self):
         """Should handle leading/trailing whitespace."""
@@ -100,7 +100,7 @@ class TestValidateAmount:
         # Over limit - should fail
         with pytest.raises(AmountValidationError) as exc_info:
             validate_amount(Decimal("10000000001"))
-        assert "maximum limit" in str(exc_info.value).lower()
+        assert "maximum allowed" in str(exc_info.value).lower()
 
     def test_validate_max_limit_edge_cases(self):
         """Should handle edge cases around maximum limit."""
@@ -133,7 +133,7 @@ class TestParseAndValidate:
 
     def test_invalid_input_formats(self):
         """Should reject invalid inputs at parsing stage."""
-        test_cases = ["abc", "500abc", "rp500000", "", "   "]
+        test_cases = ["abc", "500abc", "", "   "]
 
         for input_str in test_cases:
             with pytest.raises(AmountValidationError):

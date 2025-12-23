@@ -20,8 +20,9 @@ def mock_repository():
     """Create mock transaction repository."""
     repository = Mock(spec=TransactionRepository)
     repository.create = AsyncMock()
+    repository.find_duplicate = AsyncMock(return_value=None)
     repository.find_duplicates = AsyncMock(return_value=[])
-    repository.get_daily_sequence = AsyncMock(return_value=1)
+    repository.get_daily_count = AsyncMock(return_value=1)
     return repository
 
 
@@ -136,7 +137,7 @@ class TestRecordIncome:
                 amount=Decimal("10000000001"),  # 10 billion + 1
                 description="Test",
             )
-        assert "maximum limit" in str(exc_info.value).lower()
+        assert "maximum allowed" in str(exc_info.value).lower()
 
     @pytest.mark.asyncio
     async def test_record_income_at_max_limit(
@@ -173,9 +174,9 @@ class TestRecordIncome:
         """Should generate transaction ID with correct format."""
         # Arrange
         amount = Decimal("500000")
-        mock_repository.get_daily_sequence.return_value = 42
+        mock_repository.get_daily_count.return_value = 42
 
-        with patch("bot.services.transaction_service.date") as mock_date:
+        with patch("src.bot.services.transaction_service.date") as mock_date:
             mock_date.today.return_value = date(2025, 12, 18)
 
             expected_transaction = Transaction(
@@ -197,7 +198,7 @@ class TestRecordIncome:
 
             # Assert
             assert result.transaction_id == "TX20251218042"
-            mock_repository.get_daily_sequence.assert_called_once()
+            mock_repository.get_daily_count.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_record_income_category_always_income(
@@ -269,13 +270,3 @@ class TestRecordIncome:
 
         # Assert
         assert len(result.description) == 500
-
-    @pytest.mark.asyncio
-    def test_record_expense_with_valid_category():
-        """Test expense recording with valid category (not implemented)."""
-        pytest.skip("Expense functionality not implemented yet - Phase 5")
-
-    @pytest.mark.asyncio
-    def test_record_expense_with_invalid_category():
-        """Test expense recording with invalid category (not implemented)."""
-        pytest.skip("Expense functionality not implemented yet - Phase 5")
