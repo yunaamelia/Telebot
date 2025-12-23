@@ -24,28 +24,33 @@ Build a Telegram bot for company cash flow management enabling real-time transac
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
 ### Principle I: Code Quality & SOLID Architecture ✅
+
 - **PASS**: Architecture separates concerns: handlers (presentation), services (business logic), repositories (data access), models (domain)
 - **PASS**: Complexity managed via small, focused modules: transaction_service.py, report_generator.py, keyboard_builder.py
 - **ENFORCEMENT**: Pylint + flake8 in CI, complexity limit ≤15, function length ≤50 LOC
 
 ### Principle II: Test-First Development ✅  
+
 - **PASS**: TDD workflow: Phase 0 includes test infrastructure setup before Phase 1 implementation
 - **PASS**: Testing pyramid: Unit tests (transaction validation, amount parsing), Integration tests (DB operations, Telegram API), E2E tests (full user workflows)
 - **TARGET**: ≥80% coverage requirement, 100% for financial calculations
 
 ### Principle III: User Experience Consistency & Accessibility ✅
+
 - **PASS**: Sequential prompt flow provides clear guidance (amount → description)
 - **PASS**: Consistent emoji usage (💰 income, 💸 expense, 📊 summary) across all messages
 - **PASS**: Error messages include examples and corrective guidance per FR-025
 - **NOTE**: Telegram platform inherently mobile-optimized; keyboard navigation reduces accessibility barriers
 
 ### Principle IV: Performance Requirements & SLOs ✅
+
 - **PASS**: <2s response time target aligns with constitution <200ms p95 API requirement
 - **PASS**: 99.5% uptime target matches constitution SLO during business hours
 - **PASS**: Error budget approach: 0.1% allows for risky deployments while maintaining reliability
 - **MONITORING**: DataDog/Prometheus for continuous performance tracking
 
 ### Principle V: Observability & Debuggability ✅
+
 - **PASS**: Structured logging (JSON format) with correlation IDs for request tracing
 - **PASS**: Critical error notifications to management (report failures, auth failures 3+, downtime >5min)
 - **PASS**: Audit trail: All transactions logged with user_id, timestamp, action type per FR-021
@@ -148,6 +153,664 @@ cashflow-bot/
 
 **Structure Decision**: Single project structure selected because all components run as unified service. No frontend/backend separation needed since Telegram provides UI. CLI administration tools integrated into main service via separate command handlers.
 
+## Architecture
+
+### System Architecture Overview
+
+The Cash Flow Bot follows a **layered architecture** pattern with clear separation of concerns, enabling maintainability, testability, and scalability. The system is designed as a **single monolithic service** that handles all bot operations, scheduled tasks, and database interactions.
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                         Telegram Bot API                             │
+│                   (api.telegram.org - External)                      │
+└──────────────────────────────┬──────────────────────────────────────┘
+                                │ HTTPS / Webhook or Long Polling
+                                ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                    python-telegram-bot Library                       │
+│              (Update Dispatcher, Handler Manager)                    │
+└──────────────────────────────┬──────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                          BOT APPLICATION                             │
+│                        (src/main.py - Entry)                         │
+│                                                                       │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │                    HANDLERS LAYER                             │  │
+│  │          (Presentation - User Interaction)                    │  │
+│  │                                                               │  │
+│  │  • transaction.py    (/income, /expense commands)           │  │
+│  │  • summary.py        (/summary command)                      │  │
+│  │  • history.py        (/history command)                      │  │
+│  │  • auth.py           (/register, /approve commands)          │  │
+│  │  • keyboard.py       (Callback query handlers)               │  │
+│  │  • main_menu.py      (/start, /help commands)                │  │
+│  │  • error.py          (Global error handler)                  │  │
+│  │                                                               │  │
+│  │  Responsibilities:                                           │  │
+│  │  - Parse user commands and messages                          │  │
+│  │  - Validate input format                                     │  │
+│  │  - Call service layer for business logic                     │  │
+│  │  - Format responses for Telegram                             │  │
+│  │  - Handle conversation states                                │  │
+│  └───────────────────────────┬──────────────────────────────────┘  │
+│                               │                                      │
+│                               ▼                                      │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │                    SERVICES LAYER                             │  │
+│  │            (Business Logic - Core Operations)                 │  │
+│  │                                                               │  │
+│  │  • transaction_service.py  (Transaction CRUD, validation)    │  │
+│  │  • report_service.py       (Summary generation, analytics)   │  │
+│  │  • auth_service.py         (User registration, approval)     │  │
+│  │  • notification_service.py (Alert sending, reports)          │  │
+│  │                                                               │  │
+│  │  Responsibilities:                                           │  │
+│  │  - Business rules enforcement                                │  │
+│  │  - Amount validation (<10B, positive)                        │  │
+│  │  - Duplicate detection                                       │  │
+│  │  - Financial calculations                                    │  │
+│  │  - Timezone conversions (UTC ↔ WITA)                        │  │
+│  │  - Authorization checks                                      │  │
+│  └───────────────────────────┬──────────────────────────────────┘  │
+│                               │                                      │
+│                               ▼                                      │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │                 REPOSITORIES LAYER                            │  │
+│  │             (Data Access - Database Operations)               │  │
+│  │                                                               │  │
+│  │  • transaction_repository.py  (Transaction CRUD)             │  │
+│  │  • user_repository.py         (User CRUD)                    │  │
+│  │  • category_repository.py     (Category queries, caching)    │  │
+│  │                                                               │  │
+│  │  Responsibilities:                                           │  │
+│  │  - SQL query construction                                    │  │
+│  │  - Database session management                               │  │
+│  │  - Transaction scope handling                                │  │
+│  │  - Error handling for DB operations                          │  │
+│  │  - No business logic (pure data access)                      │  │
+│  └───────────────────────────┬──────────────────────────────────┘  │
+│                               │                                      │
+│                               ▼                                      │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │                     MODELS LAYER                              │  │
+│  │              (Domain Entities - SQLAlchemy ORM)               │  │
+│  │                                                               │  │
+│  │  • transaction.py  (Transaction model with constraints)      │  │
+│  │  • user.py         (User model with status enum)             │  │
+│  │  • category.py     (Category model with type check)          │  │
+│  │  • report.py       (DailySummary model with JSONB)           │  │
+│  │                                                               │  │
+│  │  Responsibilities:                                           │  │
+│  │  - Database table mapping                                    │  │
+│  │  - Column definitions and constraints                        │  │
+│  │  - Relationships (foreign keys)                              │  │
+│  │  - Data validation at model level                            │  │
+│  └───────────────────────────┬──────────────────────────────────┘  │
+│                               │                                      │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │                     UTILITIES                                 │  │
+│  │                                                               │  │
+│  │  • formatters.py   (Currency, ID generation)                 │  │
+│  │  • validators.py   (Input validation)                        │  │
+│  │  • timezone.py     (WITA conversions)                        │  │
+│  └──────────────────────────────────────────────────────────────┘  │
+│                                                                      │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │                   SCHEDULER (APScheduler)                     │  │
+│  │                                                               │  │
+│  │  • daily_report.py  (24:00 WITA cron job)                    │  │
+│  │                                                               │  │
+│  │  Responsibilities:                                           │  │
+│  │  - Schedule report generation at 24:00 WITA                  │  │
+│  │  - Invoke report_service for summary                         │  │
+│  │  - Handle timezone-aware job execution                       │  │
+│  └──────────────────────────────────────────────────────────────┘  │
+│                                                                      │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │                   CONFIG & LOGGING                            │  │
+│  │                                                               │  │
+│  │  • settings.py  (Pydantic environment config)                │  │
+│  │  • logging.py   (Structured JSON logging)                    │  │
+│  └──────────────────────────────────────────────────────────────┘  │
+│                                                                      │
+└──────────────────────────────┬──────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                  DATABASE CONNECTION POOL                            │
+│                   (SQLAlchemy AsyncEngine)                           │
+└──────────────────────────────┬──────────────────────────────────────┘
+                                │ asyncpg (PostgreSQL driver)
+                                ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                      PostgreSQL Database                             │
+│                          (Version 15+)                               │
+│                                                                       │
+│  Tables:                                                             │
+│  • users                (User accounts, status, employee_id)        │
+│  • categories           (Transaction categories with type)           │
+│  • transactions         (Financial transactions with audit)          │
+│  • daily_summaries      (Aggregated daily reports, JSONB)           │
+│                                                                       │
+│  Indexes:                                                            │
+│  • transactions(user_id, timestamp)  - User history queries         │
+│  • transactions(timestamp)           - Date range filtering          │
+│  • transactions(category_id)         - Category analytics            │
+│  • daily_summaries(summary_date)     - Report retrieval              │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Data Flow Diagrams
+
+#### 1. Record Income Transaction Flow
+
+```
+┌──────────────┐
+│     User     │
+└──────┬───────┘
+       │ /income 500000 Client payment
+       ▼
+┌──────────────────────────────────────┐
+│    transaction.py (Handler)          │
+│  • Parse command arguments           │
+│  • Extract amount, description       │
+└──────┬───────────────────────────────┘
+       │
+       ▼
+┌──────────────────────────────────────┐
+│  transaction_service.py (Service)    │
+│  • Validate amount (>0, <10B)        │
+│  • Check for duplicates              │
+│  • Get user from session             │
+│  • Generate transaction ID           │
+└──────┬───────────────────────────────┘
+       │
+       ▼
+┌──────────────────────────────────────┐
+│ transaction_repository.py (Repo)     │
+│  • Create Transaction object         │
+│  • Save to database                  │
+│  • Return saved transaction          │
+└──────┬───────────────────────────────┘
+       │
+       ▼
+┌──────────────────────────────────────┐
+│      PostgreSQL Database              │
+│  • INSERT INTO transactions          │
+│  • Return transaction_id             │
+└──────┬───────────────────────────────┘
+       │
+       ▼
+┌──────────────────────────────────────┐
+│  transaction_service.py (Service)    │
+│  • Format confirmation message       │
+│  • Return to handler                 │
+└──────┬───────────────────────────────┘
+       │
+       ▼
+┌──────────────────────────────────────┐
+│    transaction.py (Handler)          │
+│  • Send Telegram message             │
+│  • Log transaction recorded          │
+└──────┬───────────────────────────────┘
+       │
+       ▼
+┌──────────────┐
+│     User     │ ✅ Income Recorded Successfully
+└──────────────┘
+```
+
+#### 2. Daily Report Generation Flow (Scheduled)
+
+```
+┌──────────────────────────────────────┐
+│   APScheduler (CronTrigger)          │
+│   Fires at 24:00 WITA daily          │
+└──────┬───────────────────────────────┘
+       │
+       ▼
+┌──────────────────────────────────────┐
+│  daily_report.py (Scheduler Job)     │
+│  • Get yesterday's date (WITA)       │
+│  • Invoke report service             │
+└──────┬───────────────────────────────┘
+       │
+       ▼
+┌──────────────────────────────────────┐
+│  report_service.py (Service)         │
+│  • Query transactions for date       │
+│  • Calculate totals by type          │
+│  • Calculate category breakdown      │
+│  • Generate percentage distribution  │
+│  • Compare with previous day         │
+└──────┬───────────────────────────────┘
+       │
+       ▼
+┌──────────────────────────────────────┐
+│ transaction_repository.py (Repo)     │
+│  • SELECT * FROM transactions        │
+│    WHERE DATE = yesterday            │
+│  • GROUP BY category, type           │
+└──────┬───────────────────────────────┘
+       │
+       ▼
+┌──────────────────────────────────────┐
+│      PostgreSQL Database              │
+│  • Execute aggregation query         │
+│  • Return summary data               │
+└──────┬───────────────────────────────┘
+       │
+       ▼
+┌──────────────────────────────────────┐
+│  report_service.py (Service)         │
+│  • Create DailySummary object        │
+│  • Save to daily_summaries table     │
+│  • Format report message             │
+└──────┬───────────────────────────────┘
+       │
+       ▼
+┌──────────────────────────────────────┐
+│ notification_service.py (Service)    │
+│  • Send to MANAGEMENT_CHAT_ID        │
+│  • Handle errors (retry, alert)      │
+└──────┬───────────────────────────────┘
+       │
+       ▼
+┌──────────────────────────────────────┐
+│       Telegram Bot API                │
+│  POST /sendMessage                   │
+└──────┬───────────────────────────────┘
+       │
+       ▼
+┌──────────────┐
+│  Management  │ 📊 Daily Financial Report
+│     Chat     │
+└──────────────┘
+```
+
+#### 3. User Registration Approval Flow
+
+```
+┌──────────────┐
+│  New User    │
+└──────┬───────┘
+       │ /register EMP12345
+       ▼
+┌──────────────────────────────────────┐
+│      auth.py (Handler)                │
+│  • Check user not already registered │
+│  • Validate employee_id format       │
+└──────┬───────────────────────────────┘
+       │
+       ▼
+┌──────────────────────────────────────┐
+│   auth_service.py (Service)           │
+│  • Create User with status=pending   │
+│  • Generate notification for admin   │
+└──────┬───────────────────────────────┘
+       │
+       ▼
+┌──────────────────────────────────────┐
+│  user_repository.py (Repo)            │
+│  • INSERT INTO users                 │
+│  • Return user object                │
+└──────┬───────────────────────────────┘
+       │
+       ├─────────────────────────────────┐
+       │                                  │
+       ▼                                  ▼
+┌─────────────────┐          ┌──────────────────────┐
+│   New User      │          │  notification_service │
+│ (Confirmation)  │          │  • Send to admin      │
+└─────────────────┘          └──────┬───────────────┘
+                                     │
+                                     ▼
+                            ┌──────────────────┐
+                            │  Admin Chat      │
+                            │ 🔔 New Request   │
+                            │ [Approve][Reject]│
+                            └──────┬───────────┘
+                                   │ Admin clicks [Approve]
+                                   ▼
+                            ┌──────────────────────┐
+                            │ auth.py (Handler)    │
+                            │ /approve <user_id>   │
+                            └──────┬───────────────┘
+                                   │
+                                   ▼
+                            ┌──────────────────────┐
+                            │ auth_service.py      │
+                            │ • Update status      │
+                            │   to 'active'        │
+                            └──────┬───────────────┘
+                                   │
+                                   ▼
+                            ┌──────────────────────┐
+                            │ user_repository.py   │
+                            │ • UPDATE users       │
+                            │   SET status=active  │
+                            └──────┬───────────────┘
+                                   │
+                                   ▼
+                            ┌──────────────────────┐
+                            │  New User            │
+                            │ 🎉 Approved!         │
+                            │ (Can now use bot)    │
+                            └──────────────────────┘
+```
+
+### Component Interaction Matrix
+
+| Component | Depends On | Used By | Responsibility |
+|-----------|------------|---------|----------------|
+| **Handlers** | Services, Utils | Telegram Bot API | User interaction, input parsing, response formatting |
+| **Services** | Repositories, Utils, Models | Handlers, Scheduler | Business logic, validation, calculations |
+| **Repositories** | Models, Database | Services | Data access, query execution |
+| **Models** | SQLAlchemy | Repositories | ORM mapping, constraints |
+| **Scheduler** | Services | None (triggered by time) | Scheduled task execution |
+| **Utils** | None | Handlers, Services | Helper functions, formatting |
+| **Database** | None | Repositories | Data persistence |
+
+### Technology Stack Layers
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     PRESENTATION LAYER                           │
+│                                                                   │
+│  python-telegram-bot 20.7  →  Async/await handlers              │
+│  Telegram Bot API          →  Message/keyboard formatting       │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│                     APPLICATION LAYER                            │
+│                                                                   │
+│  Python 3.11               →  Async/await, type hints            │
+│  Pydantic Settings 2.5     →  Environment configuration          │
+│  structlog 23.2            →  Structured JSON logging            │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│                     BUSINESS LOGIC LAYER                         │
+│                                                                   │
+│  Custom Services           →  Transaction validation, reports    │
+│  pytz 2023.3               →  WITA timezone handling             │
+│  APScheduler 3.10.4        →  Daily report scheduling            │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│                     DATA ACCESS LAYER                            │
+│                                                                   │
+│  SQLAlchemy 2.0.25         →  Async ORM, session management      │
+│  asyncpg                   →  PostgreSQL async driver            │
+│  Alembic 1.12              →  Database migrations                │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│                     PERSISTENCE LAYER                            │
+│                                                                   │
+│  PostgreSQL 15+            →  ACID transactions, JSONB support   │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│                     INFRASTRUCTURE LAYER                         │
+│                                                                   │
+│  Docker 24+                →  Container runtime                  │
+│  docker-compose            →  Multi-container orchestration      │
+│  systemd                   →  Production service management      │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Deployment Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      PRODUCTION SERVER                           │
+│                     (Ubuntu 22.04 LTS)                           │
+│                                                                   │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │              Docker Environment                          │   │
+│  │                                                           │   │
+│  │  ┌────────────────────────────────────────────────────┐ │   │
+│  │  │       cashflow-bot Container                       │ │   │
+│  │  │                                                     │ │   │
+│  │  │  • Python 3.11 application                         │ │   │
+│  │  │  • Bot handlers, services, scheduler              │ │   │
+│  │  │  • Logs to stdout (JSON)                          │ │   │
+│  │  │  • Health check: /healthz endpoint                │ │   │
+│  │  │                                                     │ │   │
+│  │  │  Environment Variables:                            │ │   │
+│  │  │  - TELEGRAM_BOT_TOKEN                             │ │   │
+│  │  │  - DATABASE_URL                                    │ │   │
+│  │  │  - MANAGEMENT_CHAT_ID                             │ │   │
+│  │  │  - TIMEZONE=Asia/Makassar                         │ │   │
+│  │  │                                                     │ │   │
+│  │  └────────────────┬───────────────────────────────────┘ │   │
+│  │                   │                                      │   │
+│  │                   │ PostgreSQL connection                │   │
+│  │                   ▼                                      │   │
+│  │  ┌────────────────────────────────────────────────────┐ │   │
+│  │  │       postgres Container                           │ │   │
+│  │  │                                                     │ │   │
+│  │  │  • PostgreSQL 15                                   │ │   │
+│  │  │  • Persistent volume: /var/lib/postgresql/data    │ │   │
+│  │  │  • Network: internal                               │ │   │
+│  │  │  • Port: 5432 (not exposed externally)            │ │   │
+│  │  │                                                     │ │   │
+│  │  └─────────────────────────────────────────────────────┘ │   │
+│  │                                                           │   │
+│  └───────────────────────────────────────────────────────────┘   │
+│                                                                   │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │              systemd Service Manager                     │   │
+│  │                                                           │   │
+│  │  • cashflow-bot.service                                  │   │
+│  │  • Auto-restart on failure                               │   │
+│  │  • Logs to journald                                      │   │
+│  └───────────────────────────────────────────────────────────┘   │
+│                                                                   │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │              Backup System                               │   │
+│  │                                                           │   │
+│  │  • Daily cron job (02:00 AM)                            │   │
+│  │  • pg_dump to /backups/                                 │   │
+│  │  • 7-day retention                                       │   │
+│  └───────────────────────────────────────────────────────────┘   │
+│                                                                   │
+└───────────────────────────┬───────────────────────────────────────┘
+                            │
+                            │ HTTPS (443)
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      Telegram Servers                            │
+│                   (api.telegram.org)                             │
+│                                                                   │
+│  • Webhook endpoint (optional)                                   │
+│  • Long polling (default)                                        │
+│  • Rate limiting: 30 msg/sec                                     │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Security Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      SECURITY LAYERS                             │
+│                                                                   │
+│  Layer 1: Authentication & Authorization                         │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  • Whitelist-based user access                             │ │
+│  │  • Employee ID validation                                  │ │
+│  │  • Admin approval workflow                                 │ │
+│  │  • Session management per Telegram chat                    │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                                                                   │
+│  Layer 2: Input Validation                                       │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  • Amount validation (>0, <10B)                            │ │
+│  │  • SQL injection prevention (parameterized queries)        │ │
+│  │  • Command injection prevention                            │ │
+│  │  • Type checking with Pydantic models                      │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                                                                   │
+│  Layer 3: Data Protection                                        │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  • Environment variable for secrets                        │ │
+│  │  • No hardcoded credentials                                │ │
+│  │  • Encrypted database connections (SSL)                    │ │
+│  │  • Sensitive data not logged                               │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                                                                   │
+│  Layer 4: Network Security                                       │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  • HTTPS only for Telegram API                             │ │
+│  │  • PostgreSQL not exposed externally                       │ │
+│  │  • Docker network isolation                                │ │
+│  │  • Firewall rules (UFW/iptables)                           │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                                                                   │
+│  Layer 5: Audit & Monitoring                                     │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  • All transactions logged with user_id                    │ │
+│  │  • Structured logging with correlation IDs                 │ │
+│  │  • Critical error alerts to management                     │ │
+│  │  • Metrics collection for anomaly detection                │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Concurrency Model
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                 ASYNC/AWAIT CONCURRENCY                          │
+│                                                                   │
+│  Main Event Loop (asyncio)                                       │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │                                                             │ │
+│  │  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐ │ │
+│  │  │  User 1       │  │  User 2       │  │  User N       │ │ │
+│  │  │  Request      │  │  Request      │  │  Request      │ │ │
+│  │  └───────┬───────┘  └───────┬───────┘  └───────┬───────┘ │ │
+│  │          │                   │                   │          │ │
+│  │          ▼                   ▼                   ▼          │ │
+│  │  ┌─────────────────────────────────────────────────────┐  │ │
+│  │  │         Handler Coroutines (Async)                  │  │ │
+│  │  │  • Non-blocking I/O                                 │  │ │
+│  │  │  • await database queries                           │  │ │
+│  │  │  • await Telegram API calls                         │  │ │
+│  │  └─────────────────┬───────────────────────────────────┘  │ │
+│  │                    │                                       │ │
+│  │                    ▼                                       │ │
+│  │  ┌─────────────────────────────────────────────────────┐  │ │
+│  │  │       Database Connection Pool                      │  │ │
+│  │  │  • Max connections: 10                              │  │ │
+│  │  │  • Async connections (asyncpg)                      │  │ │
+│  │  └─────────────────────────────────────────────────────┘  │ │
+│  │                                                             │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+│                                                                   │
+│  APScheduler Background Thread                                   │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  • AsyncIOScheduler                                        │ │
+│  │  • CronTrigger for 24:00 WITA                             │ │
+│  │  • Job runs in event loop                                  │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+
+Performance Characteristics:
+• ~20 concurrent users supported
+• Non-blocking database operations
+• Efficient memory usage (single event loop)
+• No thread contention (single-threaded async)
+```
+
+### Error Handling Flow
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     ERROR HANDLING LAYERS                        │
+│                                                                   │
+│  User Error (Validation Failure)                                 │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  Handler catches ValueError                                 │ │
+│  │  → Format user-friendly message                            │ │
+│  │  → Include example usage                                    │ │
+│  │  → Send to user via Telegram                               │ │
+│  │  → Log at WARNING level                                     │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                                                                   │
+│  Business Logic Error (Duplicate, Unauthorized)                  │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  Service raises custom exception                            │ │
+│  │  → Handler catches specific exception                       │ │
+│  │  → Return actionable message to user                        │ │
+│  │  → Log at INFO level (expected behavior)                    │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                                                                   │
+│  System Error (Database, Network)                                │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  Service/Repository raises exception                        │ │
+│  │  → Global error handler catches                             │ │
+│  │  → Log at ERROR level with context                          │ │
+│  │  → Send generic error to user                               │ │
+│  │  → Retry logic for transient errors                         │ │
+│  │  → Alert management if critical                             │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                                                                   │
+│  Critical Error (Service Down, Database Unavailable)             │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  Multiple retries failed                                    │ │
+│  │  → Log at CRITICAL level                                    │ │
+│  │  → Send alert to MANAGEMENT_CHAT_ID                        │ │
+│  │  → Update service health status                             │ │
+│  │  → Trigger restart if applicable                            │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Architecture Decisions Records (ADRs)
+
+**ADR-001: Layered Architecture Pattern**
+
+- **Decision**: Use layered architecture with handlers → services → repositories → models
+- **Rationale**: Clear separation of concerns, testability, maintainability per Constitution Principle I
+- **Alternatives Considered**: Hexagonal architecture (too complex for single service), flat structure (poor maintainability)
+
+**ADR-002: Single Monolithic Service**
+
+- **Decision**: Deploy as single service, not microservices
+- **Rationale**: Simple deployment, no network overhead, 20 concurrent users doesn't justify microservices complexity
+- **Alternatives Considered**: Microservices (overkill), serverless (cold starts problematic for Telegram bot)
+
+**ADR-003: PostgreSQL over SQLite**
+
+- **Decision**: Use PostgreSQL for persistence
+- **Rationale**: ACID compliance, concurrent writes, JSONB support, production-ready for financial data
+- **Alternatives Considered**: SQLite (no concurrent writes), MongoDB (schema flexibility not needed)
+
+**ADR-004: Async/Await Concurrency**
+
+- **Decision**: Use Python asyncio for concurrency
+- **Rationale**: python-telegram-bot 20.x native async, non-blocking I/O, efficient for I/O-bound workload
+- **Alternatives Considered**: Threading (GIL contention), multiprocessing (overkill)
+
+**ADR-005: APScheduler for Cron Jobs**
+
+- **Decision**: Use APScheduler for 24:00 WITA report generation
+- **Rationale**: Simple, timezone-aware, runs in same process, no external dependencies
+- **Alternatives Considered**: Celery (too heavy), system cron (timezone handling complex)
+
 ## Complexity Tracking
 
 > **Fill ONLY if Constitution Check has violations that must be justified**
@@ -164,6 +827,7 @@ cashflow-bot/
 **Objective**: Validate technology choices, resolve NEEDS CLARIFICATION items, document best practices
 
 **Research Topics**:
+
 1. Python telegram bot framework comparison (python-telegram-bot vs. aiogram vs. Telebot)
 2. PostgreSQL vs. SQLite for financial transaction storage
 3. APScheduler vs. Celery for WITA timezone scheduling
@@ -183,12 +847,14 @@ cashflow-bot/
 **Objective**: Define data model, API contracts, and developer quickstart guide
 
 **Deliverables**:
+
 1. **data-model.md**: Database schema with all entities (Transaction, User, Category, Report, DailySummary)
 2. **contracts/commands.yaml**: All bot commands with parameters, validation rules, response formats
 3. **contracts/messages.yaml**: Message templates for confirmations, errors, summaries, reports
 4. **quickstart.md**: Development environment setup, test data scenarios, example workflows
 
 **Key Activities**:
+
 - Design PostgreSQL schema with proper indexes (date, user_id, category)
 - Define all 15+ bot commands (/income, /expense, /summary, /history, /register, /approve, /start, /help, etc.)
 - Create message template system with emoji standards and formatting
@@ -204,6 +870,7 @@ cashflow-bot/
 **Objective**: Initialize project structure, configure tooling, set up CI/CD foundations
 
 **Tasks**:
+
 - Initialize Python 3.11 project with virtual environment
 - Configure pytest, pytest-asyncio, pytest-cov
 - Set up Pylint, flake8, black (code formatting)
@@ -223,6 +890,7 @@ cashflow-bot/
 **Objective**: Implement data models, repositories, and database operations
 
 **Tasks** (TDD approach - tests first):
+
 1. Define SQLAlchemy models: Transaction, User, Category, Report, DailySummary
 2. Write unit tests for model validation (amount >0, category constraints)
 3. Implement transaction repository with CRUD operations
@@ -242,6 +910,7 @@ cashflow-bot/
 **Objective**: Implement transaction recording, validation, and calculation services
 
 **Tasks** (TDD - write tests before implementation):
+
 1. TransactionService: record_income(), record_expense(), validate_amount()
 2. Write tests for amount parsing (handle "500000", "500,000", "500.000")
 3. Implement duplicate detection logic (60-second window, same amount/description/category)
@@ -262,6 +931,7 @@ cashflow-bot/
 **Objective**: Implement all bot commands, conversation flows, and inline keyboards
 
 **Tasks** (TDD where possible, E2E tests for full flows):
+
 1. Implement /start handler with main menu keyboard
 2. Implement /income handler (command parsing, sequential prompts)
 3. Write E2E test for income recording workflow
@@ -286,6 +956,7 @@ cashflow-bot/
 **Objective**: Implement message formatting with emoji, currency formatting, Telegram HTML mode
 
 **Tasks**:
+
 1. Create formatters.py: format_currency() with Rp and thousand separators
 2. Implement transaction confirmation message templates (emoji, bold, monospace)
 3. Create summary report formatter with category grouping
@@ -301,6 +972,7 @@ cashflow-bot/
 **Deliverables**: Professional message formatting, currency display with Rp formatting, consistent emoji usage, documented Fira Code limitations
 
 **Note on Fira Code**: Telegram Bot API doesn't support custom fonts. Monospace formatting (`text`) is available via HTML or MarkdownV2. For true Fira Code rendering, would require:
+
 - Option A: Generate images with Pillow library rendering text in Fira Code (high latency, not mobile-friendly)
 - Option B: Web dashboard using Telegram Web App with Fira Code CSS (@font-face with woff2)
 - Option C: Accept Telegram's default monospace font (Courier/Menlo) and document limitation
@@ -315,6 +987,7 @@ cashflow-bot/
 **Objective**: Implement daily report generation at 24:00 WITA with retry logic
 
 **Tasks**:
+
 1. Configure APScheduler with WITA timezone (UTC+8)
 2. Implement daily_report_job() that triggers at 24:00 WITA
 3. Write tests for report generation (mock current time)
@@ -334,6 +1007,7 @@ cashflow-bot/
 **Objective**: Achieve ≥80% coverage, validate all requirements, performance testing
 
 **Tasks**:
+
 1. Write missing unit tests to reach 80% coverage
 2. Ensure 100% coverage for financial calculation functions
 3. Write integration tests for all database operations
@@ -355,6 +1029,7 @@ cashflow-bot/
 **Objective**: Production deployment, monitoring setup, backup configuration
 
 **Tasks**:
+
 1. Create production Dockerfile (multi-stage build)
 2. Set up PostgreSQL production instance with backups
 3. Configure systemd service for bot auto-restart
@@ -376,6 +1051,7 @@ cashflow-bot/
 **Objective**: Complete user documentation, admin guide, architecture docs
 
 **Tasks**:
+
 1. Write user guide: How to use bot commands
 2. Write admin guide: User approval, manual reports, troubleshooting
 3. Document architecture decisions (ADRs)

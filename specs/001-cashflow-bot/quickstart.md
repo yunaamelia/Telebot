@@ -687,6 +687,787 @@ Create `.vscode/launch.json`:
 
 ---
 
+## Test Scenarios Validation
+
+This section provides validation procedures for all critical user workflows. Run these scenarios to verify bot functionality before deploying to production.
+
+### Prerequisites for Testing
+
+1. **Bot is running** (either via `python -m src.main` or `docker-compose up`)
+2. **Database is populated** with seed data (`scripts/seed_dev_data.py`)
+3. **Your Telegram account** is registered and approved
+4. **Test environment variables** are configured in `.env`
+
+### Validation Checklist
+
+Use this checklist to track test scenario completion:
+
+- [ ] Scenario 1: Income Recording Flow
+- [ ] Scenario 2: Expense Recording with Category
+- [ ] Scenario 3: Interactive Input Flow
+- [ ] Scenario 4: Duplicate Detection Warning
+- [ ] Scenario 5: Daily Summary Generation
+- [ ] Scenario 6: Transaction History Pagination
+- [ ] Scenario 7: WITA Timezone Edge Cases
+- [ ] Scenario 8: Error Handling and Validation
+- [ ] Scenario 9: User Registration Workflow
+- [ ] Scenario 10: Automated Report Delivery
+
+---
+
+### Scenario 1: Record Income Flow
+
+**Goal**: Test complete income recording workflow
+
+**Steps**:
+
+1. Send `/income 500000 Client payment`
+2. Verify confirmation message displays:
+   - Transaction ID (format: TX20251223001)
+   - Amount formatted with Rp prefix (Rp 500.000)
+   - Description
+   - Timestamp in WITA
+3. Send `/summary`
+4. Verify income appears in today's summary
+
+**Expected Telegram Response**:
+
+```
+✅ Income Recorded Successfully
+
+Transaction ID: TX20251223001
+Amount: Rp 500.000
+Category: Income
+Description: Client payment
+Date: 2025-12-23 14:30:00 WITA
+
+Your balance has been updated.
+```
+
+**Database Verification**:
+
+```sql
+SELECT transaction_id, amount, description, type
+FROM transactions
+WHERE type = 'income'
+ORDER BY timestamp DESC
+LIMIT 1;
+
+-- Expected:
+-- TX20251223001 | 500000.00 | Client payment | income
+```
+
+**Success Criteria**:
+
+- ✅ Transaction ID generated correctly
+- ✅ Amount formatted with thousand separators
+- ✅ Timestamp shows WITA timezone
+- ✅ Transaction appears in database
+- ✅ Transaction appears in `/summary`
+
+---
+
+### Scenario 2: Expense with Category
+
+**Goal**: Test expense recording with category selection
+
+**Steps**:
+
+1. Send `/expense 250000 Office rent`
+2. Bot displays category selection keyboard with buttons:
+   - 🏢 Operational
+   - 👥 Salaries
+   - 📦 Supplies
+   - 📢 Marketing
+   - ❓ Other
+3. Click "🏢 Operational" button
+4. Verify confirmation message
+5. Send `/summary`
+6. Verify expense appears under Operational category
+
+**Expected Telegram Response (after button click)**:
+
+```
+✅ Expense Recorded Successfully
+
+Transaction ID: TX20251223002
+Amount: Rp 250.000
+Category: Operational
+Description: Office rent
+Date: 2025-12-23 14:35:00 WITA
+
+Your balance has been updated.
+```
+
+**Database Verification**:
+
+```sql
+SELECT t.transaction_id, t.amount, c.name as category
+FROM transactions t
+JOIN categories c ON t.category_id = c.category_id
+WHERE t.type = 'expense'
+ORDER BY t.timestamp DESC
+LIMIT 1;
+
+-- Expected:
+-- TX20251223002 | 250000.00 | Operational
+```
+
+**Success Criteria**:
+
+- ✅ Category keyboard displays correctly
+- ✅ Selected category saved to database
+- ✅ Category appears in confirmation
+- ✅ Category breakdown correct in `/summary`
+
+---
+
+### Scenario 3: Interactive Input Flow
+
+**Goal**: Test sequential prompt conversation for transaction entry
+
+**Steps**:
+
+1. Send `/income` (no arguments)
+2. Bot replies: "💰 Enter the income amount:"
+3. Reply: `500000`
+4. Bot replies: "📝 Enter a description (optional, send /skip to skip):"
+5. Reply: `Test income`
+6. Verify confirmation message
+
+**Expected Conversation Flow**:
+
+```
+You: /income
+
+Bot: 💰 Enter the income amount:
+(Please enter a number without currency symbols)
+
+You: 500000
+
+Bot: ✅ Amount confirmed: Rp 500.000
+
+📝 Enter a description (optional, send /skip to skip):
+
+You: Test income
+
+Bot: ✅ Income Recorded Successfully
+[... full confirmation message ...]
+```
+
+**ConversationHandler State Tracking**:
+
+```python
+# Expected state transitions:
+# WAITING_AMOUNT → WAITING_DESCRIPTION → END
+```
+
+**Success Criteria**:
+
+- ✅ Bot guides user through each step
+- ✅ Amount validation works (rejects invalid input)
+- ✅ Description is optional (/skip works)
+- ✅ Transaction saved after all inputs provided
+
+---
+
+### Scenario 4: Duplicate Detection
+
+**Goal**: Test duplicate transaction warning system
+
+**Steps**:
+
+1. Send `/income 500000 Test transaction`
+2. Wait for confirmation
+3. Wait 10 seconds (within duplicate detection window)
+4. Send `/income 500000 Test transaction` (identical)
+5. Bot displays duplicate warning with buttons:
+   - ✅ Yes, Confirm
+   - ❌ No, Cancel
+6. Click "✅ Yes, Confirm"
+7. Verify both transactions are saved
+
+**Expected Warning Message**:
+
+```
+⚠️ Possible Duplicate Transaction
+
+A similar transaction was recorded 15 seconds ago:
+
+Previous Transaction:
+• Amount: Rp 500.000
+• Description: Test transaction
+• Time: 14:45:00 WITA
+
+Do you want to record this transaction anyway?
+```
+
+**Database Verification**:
+
+```sql
+SELECT COUNT(*) as count
+FROM transactions
+WHERE amount = 500000
+  AND description = 'Test transaction'
+  AND timestamp > NOW() - INTERVAL '5 minutes';
+
+-- Expected: 2 (both transactions saved)
+```
+
+**Success Criteria**:
+
+- ✅ Duplicate detection triggers within time window
+- ✅ User can confirm or cancel duplicate
+- ✅ Both transactions saved if confirmed
+- ✅ No transaction saved if cancelled
+
+---
+
+### Scenario 5: Daily Report Generation
+
+**Goal**: Test automated 24:00 WITA daily report
+
+**Manual Test Method** (without waiting until midnight):
+
+```bash
+# Run manual report generation
+docker-compose exec bot python -c "
+from src.scheduler.daily_report import generate_daily_report
+import asyncio
+asyncio.run(generate_daily_report())
+"
+```
+
+**Steps**:
+
+1. Record various transactions during the day (mix of income/expenses)
+2. Trigger manual report generation (command above)
+3. Check management chat for report message
+4. Verify `daily_summaries` table has new entry
+
+**Expected Report Message** (sent to MANAGEMENT_CHAT_ID):
+
+```
+📊 Daily Financial Report
+Date: 2025-12-23
+
+💰 Total Income: Rp 1.500.000
+💸 Total Expenses: Rp 850.000
+💵 Net Cash Flow: Rp 650.000
+
+📈 Expense Breakdown:
+• Operational: Rp 400.000 (47%)
+• Salaries: Rp 300.000 (35%)
+• Supplies: Rp 100.000 (12%)
+• Marketing: Rp 50.000 (6%)
+
+📝 Transaction Count: 15 transactions
+
+Previous Day Comparison:
+↗️ Net flow increased by Rp 100.000 (+18%)
+```
+
+**Database Verification**:
+
+```sql
+SELECT summary_date, total_income, total_expenses, net_cash_flow, transaction_count
+FROM daily_summaries
+WHERE summary_date = CURRENT_DATE
+ORDER BY created_at DESC
+LIMIT 1;
+
+-- Verify values match report message
+```
+
+**Automated Test** (for 24:00 WITA trigger):
+
+```bash
+# Set system time to 23:59:50 WITA for testing
+# NOTE: Requires root access, run in isolated test environment
+sudo timedatectl set-time "23:59:50"
+# Wait 10 seconds for scheduler to trigger
+# Verify report is sent
+```
+
+**Success Criteria**:
+
+- ✅ Report generated at exactly 24:00 WITA
+- ✅ All transactions from day included
+- ✅ Category breakdown accurate
+- ✅ Percentage calculations correct
+- ✅ Previous day comparison shown
+- ✅ Report saved to `daily_summaries` table
+
+---
+
+### Scenario 6: Transaction History Pagination
+
+**Goal**: Test transaction history retrieval with pagination
+
+**Steps**:
+
+1. Ensure database has 20+ transactions
+2. Send `/history`
+3. Bot displays first page (10 transactions)
+4. Click "Next ▶️" button
+5. Verify page 2 displays next 10 transactions
+6. Click "◀️ Previous" button
+7. Verify returns to page 1
+
+**Expected Response (Page 1)**:
+
+```
+📜 Transaction History
+Page 1 of 3
+
+2025-12-23 14:30:00 WITA
+💰 Income - Rp 500.000
+Client payment
+ID: TX20251223001
+
+2025-12-23 14:25:00 WITA
+💸 Operational - Rp 250.000
+Office rent
+ID: TX20251223002
+
+[... 8 more transactions ...]
+
+Showing 1-10 of 25 transactions
+```
+
+**Success Criteria**:
+
+- ✅ Pagination shows 10 transactions per page
+- ✅ Navigation buttons work correctly
+- ✅ Page numbers accurate
+- ✅ Transactions sorted by timestamp (newest first)
+- ✅ All transaction details displayed correctly
+
+---
+
+### Scenario 7: WITA Timezone Edge Cases
+
+**Goal**: Test timezone handling at day boundaries
+
+**Edge Case 1: Transaction at 23:59:59 WITA**
+
+```bash
+# Set time to 23:59:55 WITA
+sudo timedatectl set-time "23:59:55"
+
+# Record transaction
+# Send: /income 100000 End of day test
+
+# Verify transaction date is CURRENT day (not next day)
+```
+
+**Edge Case 2: Daily Report at 00:00:00 WITA**
+
+```bash
+# Report should only include transactions from PREVIOUS day
+# Transaction at 23:59:59 should be in today's report
+# Transaction at 00:00:01 should be in tomorrow's report
+```
+
+**Database Verification**:
+
+```sql
+-- Check transaction date conversion
+SELECT
+    transaction_id,
+    timestamp AT TIME ZONE 'UTC' as utc_time,
+    timestamp AT TIME ZONE 'Asia/Makassar' as wita_time,
+    DATE(timestamp AT TIME ZONE 'Asia/Makassar') as wita_date
+FROM transactions
+WHERE description LIKE '%End of day test%';
+
+-- Verify WITA date matches expected day
+```
+
+**Success Criteria**:
+
+- ✅ Transactions recorded with correct WITA date
+- ✅ Daily reports use WITA date boundaries
+- ✅ No off-by-one errors at midnight
+- ✅ UTC ↔ WITA conversion accurate
+
+---
+
+### Scenario 8: Error Handling and Validation
+
+**Goal**: Test input validation and error messages
+
+**Test Cases**:
+
+1. **Invalid amount format:**
+
+   ```
+   /income abc123
+
+   Expected: ❌ Invalid amount. Please enter a valid number.
+   Example: /income 500000 Client payment
+   ```
+
+2. **Negative amount:**
+
+   ```
+   /income -500000
+
+   Expected: ❌ Amount must be positive.
+   ```
+
+3. **Amount exceeds maximum (10 billion):**
+
+   ```
+   /income 15000000000
+
+   Expected: ❌ Amount exceeds maximum allowed value (Rp 10.000.000.000)
+   ```
+
+4. **Missing required parameters:**
+
+   ```
+   /expense
+
+   Expected: Bot starts interactive flow (not error)
+   ```
+
+5. **Database connection error:**
+
+   ```
+   # Stop database
+   docker-compose stop postgres
+
+   # Try to record transaction
+   /income 100000 Test
+
+   Expected: ❌ System error. Please try again later.
+   (Error logged, management notified if critical)
+   ```
+
+**Success Criteria**:
+
+- ✅ All validation errors show user-friendly messages
+- ✅ Error messages include examples
+- ✅ System errors don't expose technical details
+- ✅ Critical errors trigger management alerts
+
+---
+
+### Scenario 9: User Registration Workflow
+
+**Goal**: Test new user registration and approval process
+
+**Steps**:
+
+1. **New user** sends `/register EMP12345` (from unregistered Telegram account)
+2. Bot responds with pending approval message
+3. **Admin** receives notification in management chat
+4. Admin reviews user details
+5. Admin sends `/approve <user_id>` or `/reject <user_id>`
+6. New user receives approval/rejection notification
+7. If approved, user can now use bot commands
+
+**Expected Messages**:
+
+**New User (after `/register EMP12345`)**:
+
+```
+✅ Registration Request Submitted
+
+Your request has been sent to administrators.
+Employee ID: EMP12345
+
+You will receive a notification once your request is reviewed.
+Please wait for approval before using the bot.
+```
+
+**Admin Notification**:
+
+```
+🔔 New Registration Request
+
+User: John Doe (@johndoe)
+Telegram ID: 123456789
+Employee ID: EMP12345
+Request Time: 2025-12-23 15:00:00 WITA
+
+Actions:
+[Approve] [Reject]
+```
+
+**After Approval**:
+
+```
+🎉 Registration Approved
+
+Your access has been approved!
+You can now use the Cash Flow Bot.
+
+Available commands:
+/income - Record income
+/expense - Record expense
+/summary - View daily summary
+/history - View transaction history
+```
+
+**Success Criteria**:
+
+- ✅ Unregistered users can only use `/register`
+- ✅ Admin receives notification with user details
+- ✅ Approval/rejection updates user status
+- ✅ Approved users can access all commands
+- ✅ Rejected users remain blocked
+
+---
+
+### Scenario 10: Automated Report Delivery
+
+**Goal**: Test scheduled report delivery to management
+
+**Test Method** (manual trigger):
+
+```bash
+# Method 1: Python console
+docker-compose exec bot python << EOF
+from src.scheduler.daily_report import generate_daily_report
+import asyncio
+asyncio.run(generate_daily_report())
+EOF
+
+# Method 2: Direct script execution
+docker-compose exec bot python -m src.scheduler.daily_report
+```
+
+**Verification Steps**:
+
+1. Trigger report generation (manual or wait for 24:00 WITA)
+2. Check management chat for report
+3. Verify report contains all required sections
+4. Check `daily_summaries` table for saved data
+5. Verify notification sent even if no transactions
+
+**Expected Report (No Transactions)**:
+
+```
+📊 Daily Financial Report
+Date: 2025-12-23
+
+💰 Total Income: Rp 0
+💸 Total Expenses: Rp 0
+💵 Net Cash Flow: Rp 0
+
+📝 Transaction Count: 0 transactions
+
+ℹ️ No transactions recorded today.
+```
+
+**Success Criteria**:
+
+- ✅ Report sent at exactly 24:00 WITA
+- ✅ Report sent even with zero transactions
+- ✅ All calculations accurate
+- ✅ Report persisted to database
+- ✅ Errors trigger management alert
+
+---
+
+## Validation Automation
+
+### Automated Test Suite
+
+Run the complete validation suite with pytest:
+
+```bash
+# Run all E2E tests
+pytest tests/e2e/ -v
+
+# Run specific scenario
+pytest tests/e2e/test_user_workflows.py::test_income_recording_flow -v
+
+# Run with coverage
+pytest tests/e2e/ --cov=src --cov-report=term-missing
+```
+
+### Integration Test Coverage
+
+```bash
+# Database operations
+pytest tests/integration/test_database.py -v
+
+# Telegram API interactions
+pytest tests/integration/test_telegram_api.py -v
+
+# Scheduler jobs
+pytest tests/integration/test_scheduler.py -v
+
+# Timezone handling
+pytest tests/integration/test_timezone_edge_cases.py -v
+```
+
+### Manual Validation Script
+
+Create a validation script that runs all scenarios:
+
+```bash
+#!/bin/bash
+# scripts/validate_scenarios.sh
+
+echo "Running test scenario validation..."
+
+# Scenario 1: Income recording
+echo "Test 1: Income recording..."
+# Add test commands here
+
+# Scenario 2: Expense recording
+echo "Test 2: Expense recording..."
+# Add test commands here
+
+# ... continue for all scenarios
+
+echo "Validation complete!"
+```
+
+---
+
+## Troubleshooting Test Scenarios
+
+### Issue: Bot doesn't respond to test commands
+
+**Diagnosis:**
+
+```bash
+# Check bot is running
+ps aux | grep "python -m src.main"
+
+# Check logs for errors
+tail -f logs/bot.log
+
+# Verify bot token
+curl https://api.telegram.org/bot<YOUR_TOKEN>/getMe
+```
+
+**Solutions:**
+
+- Restart bot: `docker-compose restart bot`
+- Check `.env` file has correct `TELEGRAM_BOT_TOKEN`
+- Verify network connectivity to api.telegram.org
+
+### Issue: Timezone calculations incorrect
+
+**Diagnosis:**
+
+```bash
+# Check system timezone
+timedatectl
+
+# Check PostgreSQL timezone
+docker-compose exec db psql -U cashflow_bot -c "SHOW timezone;"
+
+# Verify WITA timezone in code
+docker-compose exec bot python -c "
+from src.bot.utils.timezone import now_wita
+print(now_wita())
+"
+```
+
+**Solutions:**
+
+- Set system timezone: `sudo timedatectl set-timezone Asia/Makassar`
+- Verify `pytz` installed: `pip list | grep pytz`
+- Check timezone conversion functions in `src/bot/utils/timezone.py`
+
+### Issue: Database verification queries fail
+
+**Diagnosis:**
+
+```bash
+# Check database connectivity
+docker-compose exec db psql -U cashflow_bot -d cashflow_bot -c "SELECT 1;"
+
+# Check table exists
+docker-compose exec db psql -U cashflow_bot -d cashflow_bot -c "\dt"
+
+# Check migrations applied
+docker-compose exec bot alembic current
+```
+
+**Solutions:**
+
+- Run migrations: `docker-compose exec bot alembic upgrade head`
+- Restart database: `docker-compose restart db`
+- Check database URL in `.env`
+
+---
+
+## Test Data Reset
+
+To reset test data between validation runs:
+
+```bash
+# Method 1: Drop and recreate database
+docker-compose exec db psql -U cashflow_bot -c "DROP DATABASE cashflow_bot;"
+docker-compose exec db psql -U cashflow_bot -c "CREATE DATABASE cashflow_bot;"
+docker-compose exec bot alembic upgrade head
+python scripts/seed_dev_data.py
+
+# Method 2: Delete test transactions
+docker-compose exec db psql -U cashflow_bot -d cashflow_bot << EOF
+DELETE FROM daily_summaries;
+DELETE FROM transactions;
+ALTER SEQUENCE transactions_transaction_id_seq RESTART WITH 1;
+EOF
+
+# Method 3: Testcontainers (automated in integration tests)
+pytest tests/integration/ --use-testcontainers
+```
+
+---
+
+## Validation Sign-Off
+
+After completing all test scenarios, sign off on validation:
+
+```markdown
+## Validation Sign-Off
+
+- Date: _________________
+- Tester: _________________
+- Environment: [ ] Local [ ] Staging [ ] Production
+- Bot Version: _________________
+
+### Scenario Results
+
+- [x] Scenario 1: Income Recording Flow - PASS
+- [x] Scenario 2: Expense Recording with Category - PASS
+- [x] Scenario 3: Interactive Input Flow - PASS
+- [x] Scenario 4: Duplicate Detection - PASS
+- [x] Scenario 5: Daily Report Generation - PASS
+- [x] Scenario 6: Transaction History - PASS
+- [x] Scenario 7: Timezone Edge Cases - PASS
+- [x] Scenario 8: Error Handling - PASS
+- [x] Scenario 9: User Registration - PASS
+- [x] Scenario 10: Automated Reports - PASS
+
+### Overall Assessment
+
+- [ ] All scenarios pass
+- [ ] Ready for production deployment
+- [ ] Issues found (document below)
+
+### Issues Found
+
+(List any issues discovered during validation)
+
+### Recommendations
+
+(Any recommendations before production deployment)
+
+Signed: _________________
+```
+
+---
+
 ## Next Steps
 
 **After completing quickstart**:
@@ -694,8 +1475,9 @@ Create `.vscode/launch.json`:
 1. ✅ **Review Architecture**: Read [plan.md](plan.md) for system design
 2. ✅ **Understand Data Model**: Study [data-model.md](data-model.md) for database schema
 3. ✅ **Read Contracts**: Review [contracts/commands.yaml](contracts/commands.yaml) for command specifications
-4. **Start Development**: Pick a task from `tasks.md` (generated via `/speckit.tasks`)
-5. **Follow TDD**: Red → Green → Refactor workflow per Constitution Principle II
+4. ✅ **Validate Scenarios**: Complete all test scenarios above
+5. **Start Development**: Pick a task from `tasks.md` (generated via `/speckit.tasks`)
+6. **Follow TDD**: Red → Green → Refactor workflow per Constitution Principle II
 
 **Resources**:
 
