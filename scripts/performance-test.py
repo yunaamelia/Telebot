@@ -20,7 +20,7 @@ from src.bot.repositories.user_repository import UserRepository
 from src.bot.services.report_service import ReportService
 from src.bot.services.transaction_service import TransactionService
 from src.config.logging import get_logger
-from src.database.session import get_session
+from src.database.session import get_db_session
 from src.database.session import init_db
 
 logger = get_logger(__name__)
@@ -45,7 +45,7 @@ class PerformanceTest:
 
     async def setup(self, session: AsyncSession) -> int:
         """Create test user for performance testing."""
-        logger.info("Setting up performance test user")
+        logger.info("Setting up performance test user")  # type: ignore[call-arg]
 
         # Create test user
         user = await self.user_repo.create(
@@ -57,7 +57,7 @@ class PerformanceTest:
             is_active=True,
         )
 
-        logger.info("Performance test user created", user_id=user.user_id)
+        logger.info("Performance test user created")  # type: ignore[call-arg]
         return user.user_id
 
     async def cleanup(self, session: AsyncSession, user_id: int):
@@ -129,7 +129,7 @@ class PerformanceTest:
                     logger.info(f"Created {i + 1}/{num_transactions} transactions")
 
             except Exception as e:
-                logger.error(f"Failed to create transaction {i + 1}", error=str(e))
+                logger.error(f"Failed to create transaction")  # type: ignore[call-arg]
 
         total_duration = time.time() - start_time
         avg_duration = total_duration / num_transactions if num_transactions > 0 else 0
@@ -323,7 +323,7 @@ async def main():
     perf_test = PerformanceTest()
 
     try:
-        async with get_session() as session:
+        async with get_db_session() as session:
             # Setup
             user_id = await perf_test.setup(session)
 

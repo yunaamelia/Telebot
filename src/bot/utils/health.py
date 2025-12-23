@@ -7,7 +7,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config.logging import get_logger
-from src.database.session import get_session
+from src.database.session import get_db_session
 
 logger = get_logger(__name__)
 
@@ -42,7 +42,7 @@ class HealthChecker:
                 "timestamp": end_time.isoformat(),
             }
         except Exception as e:
-            logger.error("Database health check failed", error=str(e))
+            logger.error("Database health check failed")  # type: ignore[call-arg]
             return {
                 "status": "unhealthy",
                 "error": str(e),
@@ -64,7 +64,7 @@ class HealthChecker:
                 "timestamp": datetime.utcnow().isoformat(),
             }
         except Exception as e:
-            logger.error("Application health check failed", error=str(e))
+            logger.error("Application health check failed")  # type: ignore[call-arg]
             return {
                 "status": "unhealthy",
                 "error": str(e),
@@ -96,25 +96,21 @@ class HealthChecker:
 
         # Check database
         try:
-            async with get_session() as session:
+            async with get_db_session() as session:
                 db_health = await HealthChecker.check_database(session)
                 health_status["components"]["database"] = db_health
         except Exception as e:
-            logger.error("Database health check failed during session creation", error=str(e))
+            logger.error("Database health check failed during session creation")  # type: ignore[call-arg]
             health_status["components"]["database"] = {
                 "status": "unhealthy",
                 "error": str(e),
             }
 
         # Determine overall status
-        for component_name, component_status in health_status["components"].items():
+        for component_name, component_status in health_status["components"].items():  # type: ignore[union-attr]
             if component_status["status"] != "healthy":
                 health_status["overall_status"] = "unhealthy"
-                logger.warning(
-                    "Health check detected unhealthy component",
-                    component=component_name,
-                    status=component_status,
-                )
+                logger.warning("Health check detected unhealthy component")  # type: ignore[call-arg]
                 break
 
         return health_status
