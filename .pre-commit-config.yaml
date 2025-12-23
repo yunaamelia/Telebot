@@ -1,0 +1,240 @@
+# Pre-commit hooks configuration for Telegram Cash Flow Bot
+# Install: pre-commit install --install-hooks
+# Run manually: pre-commit run --all-files
+# Update hooks: pre-commit autoupdate
+
+# Global configuration
+default_install_hook_types: [pre-commit, pre-push, commit-msg, pre-merge-commit]
+default_stages: [pre-commit]
+fail_fast: false
+minimum_pre_commit_version: '3.0.0'
+default_language_version:
+  python: python3
+
+repos:
+  # ==============================================================================
+  # General File Checks
+  # ==============================================================================
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      # File formatting
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: [--fix=lf]
+
+      # Syntax validation
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: check-json
+
+      # Code quality
+      - id: check-ast  # Python syntax validation
+      - id: check-docstring-first
+      - id: check-builtin-literals
+      - id: debug-statements  # No pdb, breakpoint()
+
+      # Security
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: detect-private-key
+      - id: check-merge-conflict
+
+      # File management
+      - id: check-case-conflict
+      - id: check-executables-have-shebangs
+      - id: fix-byte-order-marker
+
+      # Requirements
+      - id: requirements-txt-fixer
+        files: ^requirements.*\.txt$
+
+  # ==============================================================================
+  # Python Code Quality
+  # ==============================================================================
+
+  # Import sorting
+  - repo: https://github.com/asottile/reorder-python-imports
+    rev: v3.12.0
+    hooks:
+      - id: reorder-python-imports
+        args:
+          - --py39-plus
+          - --application-directories=.:src
+        exclude: ^migrations/
+
+  # Python code formatting
+  - repo: https://github.com/psf/black
+    rev: 23.12.1
+    hooks:
+      - id: black
+        args: [--line-length=100]
+        exclude: ^migrations/
+
+  # Linting
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.0.0
+    hooks:
+      - id: flake8
+        args:
+          - --max-line-length=100
+          - --extend-ignore=E203,W503
+          - --exclude=migrations,venv,.git,__pycache__
+        additional_dependencies:
+          - flake8-docstrings
+          - flake8-bugbear
+          - flake8-comprehensions
+          - flake8-simplify
+
+  # Security scanning
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.6
+    hooks:
+      - id: bandit
+        args: [-c, .bandit.yml]
+        exclude: ^tests/
+
+  # Type checking (optional - can be slow)
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.8.0
+    hooks:
+      - id: mypy
+        args: [--ignore-missing-imports, --no-strict-optional]
+        additional_dependencies:
+          - types-pytz
+          - types-python-dateutil
+        exclude: ^(tests|migrations)/
+        stages: [pre-push]  # Only run on pre-push to save time
+
+  # ==============================================================================
+  # Python Modernization
+  # ==============================================================================
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.15.0
+    hooks:
+      - id: pyupgrade
+        args: [--py39-plus]
+        exclude: ^migrations/
+
+  # ==============================================================================
+  # Database & Alembic
+  # ==============================================================================
+  - repo: local
+    hooks:
+      - id: check-migration-naming
+        name: Check Alembic migration naming
+        entry: python -c "import sys, re; sys.exit(0 if all(re.match(r'^\d{3}_\w+\.py$', f.split('/')[-1]) for f in sys.argv[1:]) else 1)"
+        language: system
+        files: ^migrations/versions/.*\.py$
+
+  # ==============================================================================
+  # Secrets & Security
+  # ==============================================================================
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: [--baseline, .secrets.baseline, --no-verify]
+
+  # ==============================================================================
+  # Documentation
+  # ==============================================================================
+  - repo: https://github.com/pycqa/pydocstyle
+    rev: 6.3.0
+    hooks:
+      - id: pydocstyle
+        args:
+          - --convention=google
+          - --add-ignore=D100,D104,D107
+        exclude: ^(tests|migrations)/
+
+  # ==============================================================================
+  # Markdown & YAML
+  # ==============================================================================
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.33.0
+    hooks:
+      - id: yamllint
+        args: [-c=.yamllint.yml]
+        files: \.(yaml|yml)$
+
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.38.0
+    hooks:
+      - id: markdownlint
+        args: [--config, .markdownlint.json, --fix]
+
+  # ==============================================================================
+  # Commit Message Validation
+  # ==============================================================================
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.0.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+
+  # ==============================================================================
+  # Local Project-Specific Hooks
+  # ==============================================================================
+  - repo: local
+    hooks:
+      # Verify environment variables
+      - id: check-env-example
+        name: Check .env.example is up to date
+        entry: scripts/check_env_example.py
+        language: python
+        pass_filenames: false
+        files: ^(src/config/settings\.py|\.env\.example)$
+
+      # Run pytest on affected tests
+      # - id: pytest-check
+      #   name: Run pytest on modified test files
+      #   entry: pytest
+      #   language: system
+      #   types: [python]
+      #   files: ^tests/
+      #   pass_filenames: false
+      #   args: [--tb=short, -v]
+      #   stages: [pre-push]
+
+      # Coverage check
+      # - id: pytest-coverage
+      #   name: Check test coverage
+      #   entry: pytest
+      #   language: system
+      #   pass_filenames: false
+      #   args: [--cov=src, --cov-report=term-missing, --cov-fail-under=0]
+      #   stages: [pre-push]
+
+      # SQLAlchemy model validation
+      - id: validate-models
+        name: Validate SQLAlchemy models
+        entry: python -c "from src.bot.models import User, Category, Transaction, DailySummary; print('✅ Models validated')"
+        language: system
+        pass_filenames: false
+        files: ^src/bot/models/
+
+      # Check for TODO/FIXME without ticket reference
+      - id: check-todos
+        name: Check TODOs have ticket references
+        entry: python scripts/check_todos.py
+        language: python
+        types: [python]
+        exclude: ^(tests|migrations)/
+
+# ==============================================================================
+# CI Configuration (.github/workflows)
+# ==============================================================================
+ci:
+  autofix_commit_msg: |
+    [pre-commit.ci] auto fixes from pre-commit hooks
+
+    for more information, see https://pre-commit.ci
+  autofix_prs: true
+  autoupdate_branch: ''
+  autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
+  autoupdate_schedule: weekly
+  skip: []
+  submodules: false

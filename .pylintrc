@@ -1,0 +1,40 @@
+[MASTER]
+extension-pkg-allow-list=pydantic
+ignore=CVS,.git,__pycache__,venv,migrations/versions
+
+[MESSAGES CONTROL]
+disable=
+    C0111,  # missing-docstring
+    R0903,  # too-few-public-methods (allow data classes)
+    W0511,  # fixme (allow TODO comments)
+    C0103,  # invalid-name (allow short variable names in tests)
+
+[FORMAT]
+max-line-length=100
+indent-string='    '
+
+[DESIGN]
+max-args=7
+max-attributes=10
+max-bool-expr=5
+max-branches=12
+max-locals=15
+max-parents=7
+max-public-methods=20
+max-returns=6
+max-statements=50
+min-public-methods=0
+# Constitution requirement: Cyclomatic complexity ≤15
+max-complexity=15
+
+[BASIC]
+good-names=i,j,k,ex,_,db,id,pk,tx
+
+[SIMILARITIES]
+min-similarity-lines=4
+ignore-comments=yes
+ignore-docstrings=yes
+ignore-imports=yes
+
+[TYPECHECK]
+generated-members=REQUEST,acl_users,aq_parent
