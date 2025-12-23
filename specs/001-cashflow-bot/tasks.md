@@ -294,22 +294,22 @@
 
 ### Tests (TDD: Write FIRST, ensure they FAIL)
 
-- [ ] T121 [P] Unit test for registration workflow in tests/unit/services/test_auth_service.py
-- [ ] T122 [P] Unit test for admin approval in tests/unit/services/test_auth_service.py
-- [ ] T123 Integration test for /register command in tests/integration/test_registration.py
-- [ ] T124 E2E test for complete registration workflow in tests/e2e/test_auth_flow.py
+- [X] T121 [P] Unit test for registration workflow in tests/unit/services/test_auth_service.py
+- [X] T122 [P] Unit test for admin approval in tests/unit/services/test_auth_service.py
+- [X] T123 Integration test for /register command in tests/integration/test_registration.py
+- [X] T124 E2E test for complete registration workflow in tests/e2e/test_auth_flow.py
 
 ### Implementation Tasks for Phase 9
 
-- [ ] T125 [P] Implement AuthService.register_user() in src/bot/services/auth_service.py
-- [ ] T126 [P] Implement AuthService.approve_user() in src/bot/services/auth_service.py
-- [ ] T127 [P] Implement AuthService.check_authorization() decorator for command handlers
-- [ ] T128 Create /register command handler in src/bot/handlers/auth.py
-- [ ] T129 Create /approve command handler in src/bot/handlers/auth.py (admin only)
-- [ ] T130 Add registration notification to admins with approve button
-- [ ] T131 Add authorization check to all transaction/summary/history handlers
-- [ ] T132 Add unauthorized access error message per contracts/commands.yaml
-- [ ] T133 Add authentication failure notification (3+ attempts) per FR-030
+- [X] T125 [P] Implement AuthService.register_user() in src/bot/services/auth_service.py
+- [X] T126 [P] Implement AuthService.approve_user() in src/bot/services/auth_service.py
+- [X] T127 [P] Implement AuthService.check_authorization() decorator for command handlers
+- [X] T128 Create /register command handler in src/bot/handlers/auth.py
+- [X] T129 Create /approve command handler in src/bot/handlers/auth.py (admin only)
+- [X] T130 Add registration notification to admins with approve button
+- [X] T131 Add authorization check to all transaction/summary/history handlers
+- [X] T132 Add unauthorized access error message per contracts/commands.yaml
+- [X] T133 Add authentication failure notification (3+ attempts) per FR-030
 
 **Checkpoint**: ✅ User management complete - Controlled access to bot functions
 
