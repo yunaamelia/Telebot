@@ -387,15 +387,15 @@
 
 **Purpose**: Production deployment readiness
 
-- [ ] T162 Create systemd service file in deployment/cashflow-bot.service
-- [ ] T163 [P] Configure production environment variables in deployment/.env.production.example
-- [ ] T164 [P] Create database backup script in scripts/backup-db.sh
-- [ ] T165 Test Docker build and run locally with docker-compose up
-- [ ] T166 Create deployment runbook in docs/DEPLOYMENT.md
-- [ ] T167 [P] Setup monitoring with health check endpoint (if using web framework)
-- [ ] T168 Perform security audit (SQL injection, input validation, rate limiting)
-- [ ] T169 Run performance test with 500 transactions/day simulation per plan.md
-- [ ] T170 Validate all quickstart.md test scenarios
+- [X] T162 Create systemd service file in deployment/cashflow-bot.service
+- [X] T163 [P] Configure production environment variables in deployment/.env.production.example
+- [X] T164 [P] Create database backup script in scripts/backup-db.sh
+- [X] T165 Test Docker build and run locally with docker-compose up
+- [X] T166 Create deployment runbook in docs/DEPLOYMENT.md
+- [X] T167 [P] Setup monitoring with health check endpoint (if using web framework)
+- [X] T168 Perform security audit (SQL injection, input validation, rate limiting)
+- [X] T169 Run performance test with 500 transactions/day simulation per plan.md
+- [X] T170 Validate all quickstart.md test scenarios
 
 **Checkpoint**: ✅ Ready for production deployment
 
