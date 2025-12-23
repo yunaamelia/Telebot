@@ -1,0 +1,37 @@
+[Unit]
+Description=Telegram Cash Flow Management Bot
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=cashflow
+Group=cashflow
+WorkingDirectory=/opt/cashflow-bot
+Environment="PATH=/opt/cashflow-bot/venv/bin"
+EnvironmentFile=/opt/cashflow-bot/.env
+ExecStart=/opt/cashflow-bot/venv/bin/python /opt/cashflow-bot/src/main.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=cashflow-bot
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/cashflow-bot/logs
+ReadOnlyPaths=/opt/cashflow-bot
+
+# Resource limits
+LimitNOFILE=4096
+MemoryLimit=512M
+CPUQuota=50%
+
+# Health monitoring
+WatchdogSec=60s
+
+[Install]
+WantedBy=multi-user.target
