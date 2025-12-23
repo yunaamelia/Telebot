@@ -1,0 +1,133 @@
+[1m============================= test session starts ==============================[0m
+platform linux -- Python 3.13.5, pytest-7.4.3, pluggy-1.6.0 -- /home/racoon/Desktop/Telebot/cashflow-bot/venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/racoon/Desktop/Telebot/cashflow-bot
+configfile: pytest.ini
+plugins: Faker-22.0.0, mock-3.12.0, asyncio-0.21.1, cov-4.1.0, timeout-2.2.0, anyio-4.12.0
+asyncio: mode=Mode.AUTO
+[1mcollecting ... [0mcollected 1 item
+
+cashflow-bot/tests/unit/services/test_expense_service.py::TestRecordExpense::test_record_expense_with_valid_category
+[1m-------------------------------- live log setup --------------------------------[0m
+2025-12-22 21:43:27 [[32m    INFO[0m] Pulling image postgres:15.5
+2025-12-22 21:43:27 [[32m    INFO[0m] Container started: 8ad058902ea5
+2025-12-22 21:43:27 [[32m    INFO[0m] Waiting to be ready...
+2025-12-22 21:43:27 [[32m    INFO[0m] Waiting to be ready...
+2025-12-22 21:43:28 [[32m    INFO[0m] Waiting to be ready...
+2025-12-22 21:43:29 [[32m    INFO[0m] Waiting to be ready...
+2025-12-22 21:43:30 [[32m    INFO[0m] Waiting to be ready...
+[31mERROR[0m[31m                                                                    [100%][0m
+
+==================================== ERRORS ====================================
+[31m[1m_ ERROR at setup of TestRecordExpense.test_record_expense_with_valid_category __[0m
+file /home/racoon/Desktop/Telebot/cashflow-bot/tests/unit/services/test_expense_service.py, line 54
+      @pytest.mark.asyncio
+      async def test_record_expense_with_valid_category(
+          self,
+          transaction_service,
+          mock_transaction_repository,
+          sample_user,
+          expense_categories,
+      ):
+          """Should successfully record expense with valid category ID."""
+          # Arrange
+          amount = Decimal("250000")
+          description = "Office supplies purchase"
+          # Use existing category object from fixture
+          supplies_category = expense_categories[2]  # Supplies (ID 4)
+          category_id = supplies_category.category_id
+
+          expected_transaction = Transaction(
+              transaction_id="TX20251218001",
+              user_id=sample_user.user_id,
+              type="expense",
+              amount=amount,
+              category_id=category_id,
+              description=description,
+              timestamp=datetime.now(),
+              status="recorded",
+          )
+          mock_transaction_repository.create.return_value = expected_transaction
+
+          # Act
+          result = await transaction_service.record_expense(
+              user=sample_user,
+              amount=amount,
+              category_id=category_id,
+              description=description,
+          )
+
+          # Assert
+          assert result.type == "expense"
+          assert result.amount == amount
+          assert result.description == description
+          assert result.category_id == category_id
+          assert result.user_id == sample_user.user_id
+          mock_transaction_repository.create.assert_called_once()
+[31mE       fixture 'sample_user' not found[0m
+[31m>       available fixtures: _session_faker, anyio_backend, anyio_backend_name, anyio_backend_options, async_engine, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, class_mocker, cleanup_transactions, cov, db_session, doctest_namespace, event_loop, faker, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, income_category, mock_category_repository, mock_transaction_repository, mocker, module_mocker, monkeypatch, no_cover, package_mocker, postgres_container, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, session_mocker, test_user, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, transaction_service, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory[0m
+[31m>       use 'pytest --fixtures [testpath]' for help on them.[0m
+
+/home/racoon/Desktop/Telebot/cashflow-bot/tests/unit/services/test_expense_service.py:54
+---------------------------- Captured stderr setup -----------------------------
+Pulling image postgres:15.5
+Container started: 8ad058902ea5
+Waiting to be ready...
+Waiting to be ready...
+Waiting to be ready...
+Waiting to be ready...
+Waiting to be ready...
+------------------------------ Captured log setup ------------------------------
+[32mINFO    [0m testcontainers.core.container:container.py:53 Pulling image postgres:15.5
+[32mINFO    [0m testcontainers.core.container:container.py:64 Container started: 8ad058902ea5
+[32mINFO    [0m testcontainers.core.waiting_utils:waiting_utils.py:46 Waiting to be ready...
+[32mINFO    [0m testcontainers.core.waiting_utils:waiting_utils.py:46 Waiting to be ready...
+[32mINFO    [0m testcontainers.core.waiting_utils:waiting_utils.py:46 Waiting to be ready...
+[32mINFO    [0m testcontainers.core.waiting_utils:waiting_utils.py:46 Waiting to be ready...
+[32mINFO    [0m testcontainers.core.waiting_utils:waiting_utils.py:46 Waiting to be ready...
+
+---------- coverage: platform linux, python 3.13.5-final-0 -----------
+Name                                                          Stmts   Miss  Cover   Missing
+-------------------------------------------------------------------------------------------
+cashflow-bot/src/__init__.py                                      0      0   100%
+cashflow-bot/src/bot/__init__.py                                  0      0   100%
+cashflow-bot/src/bot/handlers/__init__.py                         0      0   100%
+cashflow-bot/src/bot/handlers/auth.py                            20     20     0%   6-70
+cashflow-bot/src/bot/handlers/keyboard.py                       126    126     0%   7-332
+cashflow-bot/src/bot/handlers/summary.py                         31     31     0%   5-135
+cashflow-bot/src/bot/handlers/transaction.py                    183    183     0%   5-596
+cashflow-bot/src/bot/keyboards/__init__.py                        0      0   100%
+cashflow-bot/src/bot/keyboards/categories.py                     19     19     0%   5-60
+cashflow-bot/src/bot/keyboards/main_menu.py                      18     18     0%   5-66
+cashflow-bot/src/bot/models/__init__.py                           5      0   100%
+cashflow-bot/src/bot/models/category.py                          24      4    83%   47-49, 53
+cashflow-bot/src/bot/models/report.py                            47     12    74%   66, 75, 84, 93-95, 103, 111, 122-125, 129
+cashflow-bot/src/bot/models/transaction.py                       41      5    88%   72, 80, 88, 96, 100
+cashflow-bot/src/bot/models/user.py                              35      4    89%   66, 74, 82, 86
+cashflow-bot/src/bot/repositories/__init__.py                     4      0   100%
+cashflow-bot/src/bot/repositories/category_repository.py         56     35    38%   30, 34-46, 54-57, 65-66, 77-78, 89-90, 101-102, 110, 118, 142-176
+cashflow-bot/src/bot/repositories/transaction_repository.py      84     60    29%   32, 62-89, 100-103, 125-149, 162-167, 189-209, 228-245, 281-320, 334-357, 371-394
+cashflow-bot/src/bot/repositories/user_repository.py             60     43    28%   25, 48-69, 80-81, 92-93, 101-104, 112-115, 131-153, 164-180, 199-220, 231-232
+cashflow-bot/src/bot/services/__init__.py                         0      0   100%
+cashflow-bot/src/bot/services/notification_service.py            75     75     0%   5-289
+cashflow-bot/src/bot/services/report_service.py                  81     81     0%   5-227
+cashflow-bot/src/bot/services/transaction_service.py             84     63    25%   79-187, 213, 251, 287-392
+cashflow-bot/src/bot/utils/__init__.py                           19      0   100%
+cashflow-bot/src/bot/utils/formatters.py                         55     46    16%   29-38, 60-68, 91-92, 112-128, 167-231
+cashflow-bot/src/bot/utils/timezone.py                           34     21    38%   17-20, 40-46, 66-72, 81, 94, 112-113, 125, 137, 149-150
+cashflow-bot/src/bot/utils/validators.py                         54     43    20%   22-23, 53-92, 122-148, 168-172, 181
+cashflow-bot/src/config/__init__.py                               8      0   100%
+cashflow-bot/src/config/logging.py                               53     35    34%   28-32, 41, 46, 62-79, 103-145
+cashflow-bot/src/config/settings.py                              53      5    91%   91, 101, 114-115, 123
+cashflow-bot/src/database/__init__.py                             8      0   100%
+cashflow-bot/src/database/connection.py                          35     22    37%   21-22, 37-69, 76-78, 92-94, 103-105
+cashflow-bot/src/database/session.py                             30     17    43%   43-53, 75-85, 98-103
+cashflow-bot/src/scheduler/__init__.py                            0      0   100%
+cashflow-bot/src/scheduler/daily_report.py                       53     53     0%   6-185
+-------------------------------------------------------------------------------------------
+TOTAL                                                          1395   1021    27%
+Coverage HTML written to dir htmlcov
+
+[36m[1m=========================== short test summary info ============================[0m
+[31mERROR[0m cashflow-bot/tests/unit/services/test_expense_service.py::[1mTestRecordExpense::test_record_expense_with_valid_category[0m
+[31m=============================== [31m[1m1 error[0m[31m in 4.92s[0m[31m ===============================[0m

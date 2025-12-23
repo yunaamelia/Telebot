@@ -233,23 +233,23 @@
 
 ### Tests for User Story 5 (TDD: Write FIRST, ensure they FAIL)
 
-- [ ] T092 [P] [US5] Unit test for main menu keyboard builder in tests/unit/keyboards/test_main_menu.py
-- [ ] T093 [P] [US5] Unit test for keyboard navigation state management in tests/unit/handlers/test_keyboard.py
-- [ ] T094 [US5] Integration test for keyboard navigation flow in tests/integration/test_keyboard_navigation.py
-- [ ] T095 [US5] E2E test for complete /start workflow in tests/e2e/test_start_flow.py
+- [X] T092 [P] [US5] Unit test for main menu keyboard builder in tests/unit/keyboards/test_main_menu.py
+- [X] T093 [P] [US5] Unit test for keyboard navigation state management in tests/unit/handlers/test_keyboard.py
+- [X] T094 [US5] Integration test for keyboard navigation flow in tests/integration/test_keyboard_navigation.py
+- [X] T095 [US5] E2E test for complete /start workflow in tests/e2e/test_start_flow.py
 
 ### Implementation for User Story 5
 
-- [ ] T096 [P] [US5] Create main menu keyboard in src/bot/keyboards/main_menu.py with buttons per US5 AS1
-- [ ] T097 [P] [US5] Implement /start command handler in src/bot/handlers/auth.py with welcome message per FR-013
-- [ ] T098 [US5] Create keyboard callback routing in src/bot/handlers/keyboard.py for all menu actions
-- [ ] T099 [US5] Implement "Record Income" button callback linking to income conversation flow
-- [ ] T100 [US5] Implement "Record Expense" button callback linking to expense conversation flow
-- [ ] T101 [US5] Implement "Daily Summary" button callback linking to summary handler
-- [ ] T102 [US5] Implement "Transaction History" button callback linking to history handler (placeholder for US6)
-- [ ] T103 [US5] Implement "Settings" button callback with "Coming soon" message per US5 AS4
-- [ ] T104 [US5] Add Back button functionality returning to previous menu level per US5 AS3
-- [ ] T105 [US5] Ensure keyboard auto-returns to main menu after transaction confirmation per US5 AS4
+- [X] T096 [P] [US5] Create main menu keyboard in src/bot/keyboards/main_menu.py with buttons per US5 AS1
+- [X] T097 [P] [US5] Implement /start command handler in src/bot/handlers/auth.py with welcome message per FR-013
+- [X] T098 [US5] Create keyboard callback routing in src/bot/handlers/keyboard.py for all menu actions
+- [X] T099 [US5] Implement "Record Income" button callback linking to income conversation flow
+- [X] T100 [US5] Implement "Record Expense" button callback linking to expense conversation flow
+- [X] T101 [US5] Implement "Daily Summary" button callback linking to summary handler
+- [X] T102 [US5] Implement "Transaction History" button callback linking to history handler (placeholder for US6)
+- [X] T103 [US5] Implement "Settings" button callback with "Coming soon" message per US5 AS4
+- [X] T104 [US5] Add Back button functionality returning to previous menu level per US5 AS3
+- [X] T105 [US5] Ensure keyboard auto-returns to main menu after transaction confirmation per US5 AS4
 
 **Checkpoint**: ✅ User Stories 1-5 complete - Full keyboard navigation enhancing UX
 
@@ -265,24 +265,24 @@
 
 ### Tests for User Story 6 (TDD: Write FIRST, ensure they FAIL)
 
-- [ ] T106 [P] [US6] Unit test for pagination logic in tests/unit/repositories/test_transaction_repository.py
-- [ ] T107 [P] [US6] Unit test for date filtering in tests/unit/repositories/test_transaction_repository.py
-- [ ] T108 [US6] Integration test for history retrieval in tests/integration/test_history.py
-- [ ] T109 [US6] E2E test for /history command in tests/e2e/test_history_flow.py with filters
+- [X] T106 [P] [US6] Unit test for pagination logic in tests/unit/repositories/test_transaction_repository.py
+- [X] T107 [P] [US6] Unit test for date filtering in tests/unit/repositories/test_transaction_repository.py
+- [X] T108 [US6] Integration test for history retrieval in tests/integration/test_history.py
+- [X] T109 [US6] E2E test for /history command in tests/e2e/test_history_flow.py with filters
 
 ### Implementation for User Story 6
 
-- [ ] T110 [P] [US6] Implement TransactionRepository.get_history() with pagination in src/bot/repositories/transaction_repository.py per FR-015
-- [ ] T111 [P] [US6] Implement date filtering in TransactionRepository with YYYY-MM-DD parsing per FR-016
-- [ ] T112 [P] [US6] Implement category filtering in TransactionRepository
-- [ ] T113 [US6] Create history command handler in src/bot/handlers/history.py for /history [date]
-- [ ] T114 [US6] Create pagination keyboard in src/bot/keyboards/main_menu.py with Previous/Next buttons per US6 AS1
-- [ ] T115 [US6] Create filter keyboard with Today/Week/Month/All buttons per US6 AS2, AS3
-- [ ] T116 [US6] Implement pagination callbacks for page navigation
-- [ ] T117 [US6] Implement filter callbacks for date and category filtering
-- [ ] T118 [US6] Add history message formatter with transaction list display
-- [ ] T119 [US6] Handle empty history with "No transactions found" message
-- [ ] T120 [US6] Implement sort order (timestamp DESC - most recent first) per data-model.md
+- [X] T110 [P] [US6] Implement TransactionRepository.get_history() with pagination in src/bot/repositories/transaction_repository.py per FR-015
+- [X] T111 [P] [US6] Implement date filtering in TransactionRepository with YYYY-MM-DD parsing per FR-016
+- [X] T112 [P] [US6] Implement category filtering in TransactionRepository
+- [X] T113 [US6] Create history command handler in src/bot/handlers/history.py for /history [date]
+- [X] T114 [US6] Create pagination keyboard in src/bot/keyboards/main_menu.py with Previous/Next buttons per US6 AS1
+- [X] T115 [US6] Create filter keyboard with Today/Week/Month/All buttons per US6 AS2, AS3
+- [X] T116 [US6] Implement pagination callbacks for page navigation
+- [X] T117 [US6] Implement filter callbacks for date and category filtering
+- [X] T118 [US6] Add history message formatter with transaction list display
+- [X] T119 [US6] Handle empty history with "No transactions found" message
+- [X] T120 [US6] Implement sort order (timestamp DESC - most recent first) per data-model.md
 
 **Checkpoint**: ✅ All 6 User Stories complete - Full feature set delivered
 
